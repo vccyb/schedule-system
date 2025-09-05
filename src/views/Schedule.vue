@@ -12,7 +12,7 @@
           @click="handleAutoSchedule"
           :icon="Lightning"
           :loading="autoScheduling"
-          :disabled="!hasClassRequirements"
+          :disabled="!hasClassRequirements && isSmartScheduleAuthorized"
         >
           智能排课
           <el-tag v-if="!isSmartScheduleAuthorized" size="small" type="warning" class="ml-1"
@@ -711,6 +711,7 @@ const showRequirementDialog = () => {
 // 智能排课
 const handleAutoSchedule = async () => {
   // 检查授权
+  await checkSmartScheduleAuth()
   if (!isSmartScheduleAuthorized.value) {
     ElMessage.warning('智能排课是付费功能，请先获取授权码')
     router.push('/auth')
@@ -723,7 +724,7 @@ const handleAutoSchedule = async () => {
   }
 
   if (!hasClassRequirements.value) {
-    ElMessage.warning('请先在班级管理中设置课程需求')
+    ElMessage.warning('请先为该班级设置课程需求')
     return
   }
 

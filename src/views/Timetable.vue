@@ -11,7 +11,7 @@
           type="success"
           @click="handleExportToExcel"
           :icon="Download"
-          :disabled="scheduleStore.scheduleCount === 0"
+          :disabled="scheduleStore.scheduleCount === 0 && isExportAuthorized"
         >
           导出Excel
           <el-tag v-if="!isExportAuthorized" size="small" type="warning" class="ml-1">付费</el-tag>
@@ -20,7 +20,7 @@
           type="primary"
           @click="handleExportToPDF"
           :icon="Printer"
-          :disabled="scheduleStore.scheduleCount === 0"
+          :disabled="scheduleStore.scheduleCount === 0 && isExportAuthorized"
         >
           导出PDF
           <el-tag v-if="!isExportAuthorized" size="small" type="warning" class="ml-1">付费</el-tag>
@@ -463,6 +463,10 @@ const handleExportToExcel = async () => {
     router.push('/auth')
     return
   }
+  if (scheduleStore.scheduleCount === 0) {
+    ElMessage.warning('暂无课程数据，请先进行排课')
+    return
+  }
   exportToExcel()
 }
 
@@ -472,6 +476,10 @@ const handleExportToPDF = async () => {
   if (!isExportAuthorized.value) {
     ElMessage.warning('导出功能是付费功能，请先获取授权码')
     router.push('/auth')
+    return
+  }
+  if (scheduleStore.scheduleCount === 0) {
+    ElMessage.warning('暂无课程数据，请先进行排课')
     return
   }
   exportToPDF()

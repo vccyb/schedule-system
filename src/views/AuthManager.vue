@@ -123,7 +123,7 @@
                 <span class="text-sm text-gray-600 ml-1">/月</span>
               </div>
               <div class="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
-                省030元
+                立省30元
               </div>
             </div>
           </div>
