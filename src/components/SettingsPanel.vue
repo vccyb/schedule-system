@@ -35,7 +35,7 @@
             字体大小
           </h3>
           <p class="setting-description">调整界面文字的显示大小</p>
-          
+
           <div class="mt-4 space-y-3">
             <div
               v-for="size in fontSizeOptions"
@@ -46,18 +46,10 @@
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                  <div
-                    class="font-size-preview"
-                    :class="size.previewClass"
-                  >
-                    字
-                  </div>
+                  <div class="font-size-preview" :class="size.previewClass">字</div>
                   <span class="ml-3">{{ size.label }}</span>
                 </div>
-                <el-icon
-                  v-if="settingsStore.fontSize === size.value"
-                  class="text-blue-500"
-                >
+                <el-icon v-if="settingsStore.fontSize === size.value" class="text-blue-500">
                   <Check />
                 </el-icon>
               </div>
@@ -72,7 +64,7 @@
             重置设置
           </h3>
           <p class="setting-description">恢复所有设置到默认状态</p>
-          
+
           <el-button
             type="danger"
             plain
@@ -91,12 +83,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Setting,
-  EditPen,
-  Check,
-  RefreshRight
-} from '@element-plus/icons-vue'
+import { Setting, EditPen, Check, RefreshRight } from '@element-plus/icons-vue'
 import { useSettingsStore } from '@/stores/settings'
 import type { FontSize } from '@/stores/settings'
 
@@ -108,33 +95,29 @@ const fontSizeOptions = [
   {
     value: 'medium' as FontSize,
     label: '中等',
-    previewClass: 'text-base'
+    previewClass: 'text-base',
   },
   {
     value: 'large' as FontSize,
     label: '大',
-    previewClass: 'text-lg'
+    previewClass: 'text-lg',
   },
   {
     value: 'extra-large' as FontSize,
     label: '超大',
-    previewClass: 'text-xl'
-  }
+    previewClass: 'text-xl',
+  },
 ]
 
 // 重置设置
 const handleReset = async () => {
   try {
-    await ElMessageBox.confirm(
-      '确定要重置所有设置吗？这将恢复到默认状态。',
-      '确认重置',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-    
+    await ElMessageBox.confirm('确定要重置所有设置吗？这将恢复到默认状态。', '确认重置', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
     settingsStore.resetSettings()
     ElMessage.success('设置已重置')
   } catch {

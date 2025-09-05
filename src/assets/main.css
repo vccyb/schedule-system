@@ -16,6 +16,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f8fafc;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dark body {
@@ -261,12 +263,17 @@ html.font-extra-large {
 .dark .shadow-sm,
 .dark .shadow-lg,
 .dark .shadow-xl {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.5),
+    0 1px 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* 平滑过渡效果 */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 /* 确保所有卡片和容器在暗色主题下有正确的背景 */
@@ -424,12 +431,17 @@ html.font-extra-large {
 .dark .shadow-sm,
 .dark .shadow-lg,
 .dark .shadow-xl {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.5),
+    0 1px 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* 平滑过渡效果 */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 /* 确保所有卡片和容器在暗色主题下有正确的背景 */

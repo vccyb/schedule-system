@@ -9,7 +9,9 @@
       <div class="flex items-center space-x-3">
         <el-button type="success" size="large" @click="showImportDialog" :icon="Upload">
           批量导入
-          <el-tag v-if="!isBatchImportAuthorized" size="small" type="warning" class="ml-1">付费</el-tag>
+          <el-tag v-if="!isBatchImportAuthorized" size="small" type="warning" class="ml-1"
+            >付费</el-tag
+          >
         </el-button>
         <el-button type="primary" size="large" @click="showAddDialog" :icon="Plus">
           添加班级
@@ -365,8 +367,10 @@
             步骤二：上传填好的 Excel 文件
           </h4>
           <p class="text-gray-600 mb-4">支持 .xlsx 和 .xls 格式的 Excel 文件</p>
-          
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors"
+          >
             <el-icon class="text-4xl text-gray-400 mb-4"><Upload /></el-icon>
             <p class="text-gray-600 mb-4">点击选择文件或拖拽文件到此区域</p>
             <el-button type="primary" @click="selectFile">选择文件</el-button>
@@ -398,7 +402,7 @@
           <h4 class="text-lg font-medium text-gray-900">导入预览</h4>
           <el-tag type="info">共 {{ importData.length }} 条记录</el-tag>
         </div>
-        
+
         <div class="max-h-96 overflow-y-auto border rounded">
           <el-table :data="importData" size="small" stripe>
             <el-table-column prop="name" label="班级名称" width="150" />
@@ -429,7 +433,17 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Search, Edit, Delete, School, Setting, Document, Upload, Download } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Search,
+  Edit,
+  Delete,
+  School,
+  Setting,
+  Document,
+  Upload,
+  Download,
+} from '@element-plus/icons-vue'
 import { useClassStore } from '@/stores/class'
 import { useScheduleStore } from '@/stores/schedule'
 import { useCourseStore } from '@/stores/course'
@@ -587,7 +601,9 @@ const handleSubmit = async () => {
       studentCount: form.studentCount,
       description: form.description.trim() || undefined,
       headTeacherId: form.headTeacherId || undefined,
-      headTeacherName: form.headTeacherId ? teacherStore.getTeacherById(form.headTeacherId)?.name : undefined,
+      headTeacherName: form.headTeacherId
+        ? teacherStore.getTeacherById(form.headTeacherId)?.name
+        : undefined,
     }
 
     if (isEdit.value) {
@@ -753,10 +769,10 @@ const downloadTemplate = () => {
     ['一班', '九年级', 45, '优秀班级'],
     ['二班', '九年级', 42, '普通班级'],
   ]
-  
+
   const workbook = XLSX.utils.book_new()
   const worksheet = XLSX.utils.aoa_to_sheet(templateData)
-  
+
   // 设置列宽
   worksheet['!cols'] = [
     { wch: 15 }, // 班级名称
@@ -764,7 +780,7 @@ const downloadTemplate = () => {
     { wch: 15 }, // 学生人数
     { wch: 30 }, // 描述
   ]
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, '班级信息')
   XLSX.writeFile(workbook, '班级导入模板.xlsx')
   ElMessage.success('模板下载成功')
@@ -780,64 +796,64 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  
+
   if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
     ElMessage.error('请选择 Excel 文件')
     return
   }
-  
+
   parseExcelFile(file)
 }
 
 // 解析 Excel 文件
 const parseExcelFile = (file: File) => {
   const reader = new FileReader()
-  
+
   reader.onload = (e) => {
     try {
       const data = e.target?.result
       const workbook = XLSX.read(data, { type: 'binary' })
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]
-      
+
       // 转换为 JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][]
-      
+
       if (jsonData.length < 2) {
         ElMessage.error('文件中没有数据')
         return
       }
-      
+
       // 跳过表头，处理数据
       const classes: Class[] = []
       const errors: string[] = []
-      
+
       for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i]
         if (!row[0]) continue // 跳过空行
-        
+
         const name = row[0]?.toString().trim()
         const grade = row[1]?.toString().trim()
         const studentCount = parseInt(row[2]?.toString() || '30')
         const description = row[3]?.toString().trim() || ''
-        
+
         // 验证必填字段
         if (!name) {
           errors.push(`第${i + 1}行：班级名称不能为空`)
           continue
         }
-        
+
         if (!grade) {
           errors.push(`第${i + 1}行：年级不能为空`)
           continue
         }
-        
+
         // 验证学生人数
         if (isNaN(studentCount) || studentCount < 1 || studentCount > 100) {
           errors.push(`第${i + 1}行：学生人数必须在 1-100 之间`)
           continue
         }
-        
+
         classes.push({
           id: `class_${Date.now()}_${i}`,
           name,
@@ -848,38 +864,37 @@ const parseExcelFile = (file: File) => {
           createdAt: new Date().toISOString(),
         })
       }
-      
+
       if (errors.length > 0) {
         ElMessage.error(`发现${errors.length}个错误：\n${errors.join('\n')}`)
         return
       }
-      
+
       if (classes.length === 0) {
         ElMessage.error('没有可导入的数据')
         return
       }
-      
+
       importData.value = classes
       importPreviewVisible.value = true
-      
     } catch (error) {
       console.error('解析文件失败:', error)
       ElMessage.error('文件解析失败，请检查文件格式')
     }
   }
-  
+
   reader.readAsBinaryString(file)
 }
 
 // 确认导入
 const confirmImport = async () => {
   if (importData.value.length === 0) return
-  
+
   try {
     importing.value = true
-    
+
     // 批量添加班级
-    importData.value.forEach(classItem => {
+    importData.value.forEach((classItem) => {
       classStore.addClass({
         name: classItem.name,
         grade: classItem.grade,
@@ -887,17 +902,16 @@ const confirmImport = async () => {
         description: classItem.description,
       })
     })
-    
+
     ElMessage.success(`成功导入${importData.value.length}个班级`)
     importDialogVisible.value = false
     importPreviewVisible.value = false
     importData.value = []
-    
+
     // 清空文件输入
     if (fileInputRef.value) {
       fileInputRef.value.value = ''
     }
-    
   } catch (error) {
     console.error('导入失败:', error)
     ElMessage.error('导入失败')

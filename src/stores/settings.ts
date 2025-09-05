@@ -16,7 +16,7 @@ export const useSettingsStore = defineStore('settings', () => {
     const labels = {
       medium: '中等',
       large: '大',
-      'extra-large': '超大'
+      'extra-large': '超大',
     }
     return labels[fontSize.value]
   })
@@ -25,7 +25,7 @@ export const useSettingsStore = defineStore('settings', () => {
     const classes = {
       medium: 'text-base leading-relaxed',
       large: 'text-lg leading-relaxed',
-      'extra-large': 'text-xl leading-relaxed'
+      'extra-large': 'text-xl leading-relaxed',
     }
     return classes[fontSize.value]
   })
@@ -64,7 +64,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const saveToStorage = () => {
     try {
       const settings: AppSettings = {
-        fontSize: fontSize.value
+        fontSize: fontSize.value,
       }
       localStorage.setItem('app-settings', JSON.stringify(settings))
     } catch (error) {
@@ -82,15 +82,15 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     // 状态
     fontSize,
-    
+
     // 计算属性
     fontSizeLabel,
     fontSizeClass,
-    
+
     // 方法
     setFontSize,
     loadFromStorage,
     saveToStorage,
-    resetSettings
+    resetSettings,
   }
 })

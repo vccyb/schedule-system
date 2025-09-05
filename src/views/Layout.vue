@@ -12,12 +12,7 @@
           </h1>
         </div>
 
-        <el-menu 
-          :default-active="$route.path" 
-          class="border-none" 
-          router 
-          unique-opened
-        >
+        <el-menu :default-active="$route.path" class="border-none" router unique-opened>
           <el-menu-item index="/dashboard">
             <el-icon><Odometer /></el-icon>
             <span>仪表板</span>
@@ -53,7 +48,9 @@
       <!-- 主内容区 -->
       <el-main class="p-0">
         <!-- 顶部导航栏 -->
-        <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div
+          class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between"
+        >
           <div class="flex items-center">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item>简单排课</el-breadcrumb-item>
@@ -103,10 +100,7 @@
         </div>
 
         <!-- 页面内容 -->
-        <div 
-          :class="settingsStore.fontSizeClass"
-          class="p-6 h-full overflow-auto"
-        >
+        <div :class="settingsStore.fontSizeClass" class="p-6 h-full overflow-auto">
           <RouterView />
         </div>
       </el-main>

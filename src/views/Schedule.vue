@@ -374,7 +374,9 @@
           <el-table-column label="已排课时" width="100" align="center">
             <template #default="{ row }">
               <el-tag
-                :type="getScheduledHours(row.subjectName) >= row.weeklyHours ? 'success' : 'warning'"
+                :type="
+                  getScheduledHours(row.subjectName) >= row.weeklyHours ? 'success' : 'warning'
+                "
               >
                 {{ getScheduledHours(row.subjectName) }} 节
               </el-tag>
@@ -849,9 +851,22 @@ const requirementRules: FormRules = {
 
 // 学科选项（常用学科）
 const subjectOptions = [
-  '语文', '数学', '英语', '物理', '化学', '生物',
-  '政治', '历史', '地理', '体育', '音乐', '美术',
-  '信息技术', '通用技术', '心理健康', '班会'
+  '语文',
+  '数学',
+  '英语',
+  '物理',
+  '化学',
+  '生物',
+  '政治',
+  '历史',
+  '地理',
+  '体育',
+  '音乐',
+  '美术',
+  '信息技术',
+  '通用技术',
+  '心理健康',
+  '班会',
 ]
 
 const showRequirementDialog = () => {

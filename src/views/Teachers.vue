@@ -9,7 +9,9 @@
       <div class="flex items-center space-x-3">
         <el-button type="success" size="large" @click="showImportDialog" :icon="Upload">
           批量导入
-          <el-tag v-if="!isBatchImportAuthorized" size="small" type="warning" class="ml-1">付费</el-tag>
+          <el-tag v-if="!isBatchImportAuthorized" size="small" type="warning" class="ml-1"
+            >付费</el-tag
+          >
         </el-button>
         <el-button type="primary" size="large" @click="showAddDialog" :icon="Plus">
           添加教师
@@ -202,8 +204,10 @@
             步骤二：上传填好的 Excel 文件
           </h4>
           <p class="text-gray-600 mb-4">支持 .xlsx 和 .xls 格式的 Excel 文件</p>
-          
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors"
+          >
             <el-icon class="text-4xl text-gray-400 mb-4"><Upload /></el-icon>
             <p class="text-gray-600 mb-4">点击选择文件或拖拽文件到此区域</p>
             <el-button type="primary" @click="selectFile">选择文件</el-button>
@@ -235,7 +239,7 @@
           <h4 class="text-lg font-medium text-gray-900">导入预览</h4>
           <el-tag type="info">共 {{ importData.length }} 条记录</el-tag>
         </div>
-        
+
         <div class="max-h-96 overflow-y-auto border rounded">
           <el-table :data="importData" size="small" stripe>
             <el-table-column prop="name" label="姓名" width="120" />
@@ -494,10 +498,10 @@ const downloadTemplate = () => {
     ['张三', '数学', '13800138000', 'zhangsan@example.com'],
     ['李四', '语文', '13900139000', 'lisi@example.com'],
   ]
-  
+
   const workbook = XLSX.utils.book_new()
   const worksheet = XLSX.utils.aoa_to_sheet(templateData)
-  
+
   // 设置列宽
   worksheet['!cols'] = [
     { wch: 15 }, // 姓名
@@ -505,7 +509,7 @@ const downloadTemplate = () => {
     { wch: 20 }, // 手机号码
     { wch: 25 }, // 邮箱
   ]
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, '教师信息')
   XLSX.writeFile(workbook, '教师导入模板.xlsx')
   ElMessage.success('模板下载成功')
@@ -521,70 +525,70 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  
+
   if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
     ElMessage.error('请选择 Excel 文件')
     return
   }
-  
+
   parseExcelFile(file)
 }
 
 // 解析 Excel 文件
 const parseExcelFile = (file: File) => {
   const reader = new FileReader()
-  
+
   reader.onload = (e) => {
     try {
       const data = e.target?.result
       const workbook = XLSX.read(data, { type: 'binary' })
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]
-      
+
       // 转换为 JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][]
-      
+
       if (jsonData.length < 2) {
         ElMessage.error('文件中没有数据')
         return
       }
-      
+
       // 跳过表头，处理数据
       const teachers: Teacher[] = []
       const errors: string[] = []
-      
+
       for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i]
         if (!row[0]) continue // 跳过空行
-        
+
         const name = row[0]?.toString().trim()
         const subject = row[1]?.toString().trim()
         const phone = row[2]?.toString().trim()
         const email = row[3]?.toString().trim()
-        
+
         // 验证必填字段
         if (!name) {
           errors.push(`第${i + 1}行：姓名不能为空`)
           continue
         }
-        
+
         if (!subject) {
           errors.push(`第${i + 1}行：学科不能为空`)
           continue
         }
-        
+
         // 验证手机号格式
         if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
           errors.push(`第${i + 1}行：手机号格式不正确`)
           continue
         }
-        
+
         // 验证邮箱格式
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           errors.push(`第${i + 1}行：邮箱格式不正确`)
           continue
         }
-        
+
         teachers.push({
           id: `teacher_${Date.now()}_${i}`,
           name,
@@ -594,38 +598,37 @@ const parseExcelFile = (file: File) => {
           createdAt: new Date().toISOString(),
         })
       }
-      
+
       if (errors.length > 0) {
         ElMessage.error(`发现${errors.length}个错误：\n${errors.join('\n')}`)
         return
       }
-      
+
       if (teachers.length === 0) {
         ElMessage.error('没有可导入的数据')
         return
       }
-      
+
       importData.value = teachers
       importPreviewVisible.value = true
-      
     } catch (error) {
       console.error('解析文件失败:', error)
       ElMessage.error('文件解析失败，请检查文件格式')
     }
   }
-  
+
   reader.readAsBinaryString(file)
 }
 
 // 确认导入
 const confirmImport = async () => {
   if (importData.value.length === 0) return
-  
+
   try {
     importing.value = true
-    
+
     // 批量添加教师
-    importData.value.forEach(teacher => {
+    importData.value.forEach((teacher) => {
       teacherStore.addTeacher({
         name: teacher.name,
         subject: teacher.subject,
@@ -633,17 +636,16 @@ const confirmImport = async () => {
         email: teacher.email,
       })
     })
-    
+
     ElMessage.success(`成功导入${importData.value.length}位教师`)
     importDialogVisible.value = false
     importPreviewVisible.value = false
     importData.value = []
-    
+
     // 清空文件输入
     if (fileInputRef.value) {
       fileInputRef.value.value = ''
     }
-    
   } catch (error) {
     console.error('导入失败:', error)
     ElMessage.error('导入失败')

@@ -63,13 +63,13 @@ export const useClassStore = defineStore('class', () => {
       courseRequirements: [],
       createdAt: new Date().toISOString(),
     }
-    
+
     // 如果有班主任ID，自动填充班主任姓名
     if (classData.headTeacherId) {
       // 这里需要从 teacher store 获取教师信息，但为了避免循环依赖，我们在组件中处理
       newClass.headTeacherName = classData.headTeacherName
     }
-    
+
     classes.value.push(newClass)
     saveToStorage()
     return newClass

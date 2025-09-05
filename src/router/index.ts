@@ -5,6 +5,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: () => import('@/views/Landing.vue'),
+      meta: { title: '简单排课系统' },
+    },
+    {
+      path: '/app',
       name: 'layout',
       component: () => import('@/views/Layout.vue'),
       redirect: '/dashboard',
