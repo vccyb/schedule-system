@@ -367,9 +367,12 @@ const scheduleStore = useScheduleStore()
 const classStore = useClassStore()
 
 // 检查智能排课是否已授权
-const isSmartScheduleAuthorized = computed(() => {
-  return isFeatureAuthorized('SMART_SCHEDULE')
-})
+const isSmartScheduleAuthorized = ref(false)
+
+// 初始化授权状态
+const checkSmartScheduleAuth = async () => {
+  isSmartScheduleAuthorized.value = await isFeatureAuthorized('SMART_SCHEDULE')
+}
 
 // 响应式数据
 const selectedClass = ref('')
@@ -752,11 +755,12 @@ const handleAutoSchedule = async () => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   teacherStore.loadFromStorage()
   courseStore.loadFromStorage()
   scheduleStore.loadFromStorage()
   classStore.loadFromStorage()
+  await checkSmartScheduleAuth()
 })
 </script>
 

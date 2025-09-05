@@ -189,7 +189,7 @@ const generateCurrentMonthCode = () => {
 }
 
 // 生成指定月份授权码
-const generateAuthCode = () => {
+const generateAuthCode = async () => {
   if (!targetDate.value) {
     ElMessage.warning('请选择目标年月')
     return
@@ -197,7 +197,7 @@ const generateAuthCode = () => {
 
   try {
     const yearMonth = targetDate.value.replace('-', '')
-    const code = generateCode(yearMonth, userSeed.value)
+    const code = await generateCode(yearMonth, userSeed.value)
 
     const nextMonth = dayjs(targetDate.value).add(1, 'month')
     generatedCode.value = {
@@ -237,14 +237,14 @@ ${userSeed.value ? `用户标识: ${userSeed.value}` : ''}
 }
 
 // 验证授权码
-const validateCode = () => {
+const validateCode = async () => {
   if (!testCode.value) {
     ElMessage.warning('请输入授权码')
     return
   }
 
   try {
-    validationResult.value = validateAuthCode(testCode.value, testUserSeed.value)
+    validationResult.value = await validateAuthCode(testCode.value, testUserSeed.value)
 
     if (validationResult.value.isValid) {
       ElMessage.success('授权码验证成功')

@@ -355,12 +355,12 @@ const submitAuthCode = async () => {
   submitting.value = true
 
   try {
-    const success = saveAuthCode(authCodeInput.value, userSeedInput.value)
+    const success = await saveAuthCode(authCodeInput.value, userSeedInput.value)
 
     if (success) {
       ElMessage.success('授权码验证成功！所有专业版功能已解锁')
       authDialogVisible.value = false
-      refreshAuthStatus()
+      await refreshAuthStatus()
     } else {
       ElMessage.error('授权码无效，请检查输入是否正确')
     }
@@ -382,7 +382,7 @@ const clearAuthCode = async () => {
     })
 
     clearAuth()
-    refreshAuthStatus()
+    await refreshAuthStatus()
     ElMessage.success('授权已清除')
   } catch {
     // 用户取消
@@ -400,13 +400,13 @@ const copyWechat = async () => {
 }
 
 // 刷新授权状态
-const refreshAuthStatus = () => {
-  authStatus.value = getAuthStatus()
+const refreshAuthStatus = async () => {
+  authStatus.value = await getAuthStatus()
 }
 
 // 初始化
-onMounted(() => {
-  refreshAuthStatus()
+onMounted(async () => {
+  await refreshAuthStatus()
 })
 </script>
 

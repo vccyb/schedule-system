@@ -123,7 +123,7 @@
         <div class="timetable-grid">
           <!-- 表头 -->
           <div class="grid-header">
-            <div class="header-cell corner-cell">时间\\星期</div>
+            <div class="header-cell corner-cell">时间\星期</div>
             <div v-for="day in weekDays" :key="day.value" class="header-cell day-header">
               {{ day.label }}
             </div>
@@ -296,9 +296,12 @@ const scheduleStore = useScheduleStore()
 const classStore = useClassStore()
 
 // 检查导出功能是否已授权
-const isExportAuthorized = computed(() => {
-  return isFeatureAuthorized('EXPORT_FUNCTIONS')
-})
+const isExportAuthorized = ref(false)
+
+// 初始化授权状态
+const checkExportAuth = async () => {
+  isExportAuthorized.value = await isFeatureAuthorized('EXPORT_FUNCTIONS')
+}
 
 const selectedTeacher = ref('')
 const selectedSubject = ref('')
@@ -453,7 +456,8 @@ const handleViewChange = () => {
 }
 
 // 处理导出Excel点击
-const handleExportToExcel = () => {
+const handleExportToExcel = async () => {
+  await checkExportAuth()
   if (!isExportAuthorized.value) {
     ElMessage.warning('导出功能是付费功能，请先获取授权码')
     router.push('/auth')
@@ -463,7 +467,8 @@ const handleExportToExcel = () => {
 }
 
 // 处理导出PDF点击
-const handleExportToPDF = () => {
+const handleExportToPDF = async () => {
+  await checkExportAuth()
   if (!isExportAuthorized.value) {
     ElMessage.warning('导出功能是付费功能，请先获取授权码')
     router.push('/auth')
@@ -610,11 +615,12 @@ const exportToPDF = async () => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   teacherStore.loadFromStorage()
   courseStore.loadFromStorage()
   scheduleStore.loadFromStorage()
   classStore.loadFromStorage()
+  await checkExportAuth()
 })
 </script>
 

@@ -414,8 +414,8 @@ const formatDate = (dateStr: string) => {
 }
 
 // 处理智能排课点击
-const handleSmartSchedule = () => {
-  if (isFeatureAuthorized('SMART_SCHEDULE')) {
+const handleSmartSchedule = async () => {
+  if (await isFeatureAuthorized('SMART_SCHEDULE')) {
     router.push('/schedule')
   } else {
     ElMessage.warning('智能排课是付费功能，请先获取授权码')
@@ -424,8 +424,8 @@ const handleSmartSchedule = () => {
 }
 
 // 处理导出课表点击
-const handleExportTimetable = () => {
-  if (isFeatureAuthorized('EXPORT_FUNCTIONS')) {
+const handleExportTimetable = async () => {
+  if (await isFeatureAuthorized('EXPORT_FUNCTIONS')) {
     router.push('/timetable')
   } else {
     ElMessage.warning('导出功能是付费功能，请先获取授权码')

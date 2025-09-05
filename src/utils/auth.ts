@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js'
+// 使用浏览器原生的 Web Crypto API 替代 crypto-js
 
 // 授权配置（只有开发者知道的密钥）
 const SECRET_SALT = 'SIMPLE_SCHEDULE_PRO_2024_VccYb_Auth_System'
@@ -14,10 +14,27 @@ export interface AuthStatus {
   remainingDays: number
 }
 
+// 使用浏览器原生 crypto API 生成 SHA-256 哈希
+async function generateHash(text: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(text)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+
+  // 转换为 Base64 格式
+  const bytes = new Uint8Array(hashBuffer)
+  let binary = ''
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
 // 生成授权码（开发者用）
-export function generateAuthCode(yearMonth: string, userSeed: string = ''): string {
+export async function generateAuthCode(yearMonth: string, userSeed: string = ''): Promise<string> {
   const rawString = `${SECRET_SALT}:${yearMonth}:${PRO_FEATURE_KEY}:${userSeed}`
-  const hash = CryptoJS.SHA256(rawString).toString(CryptoJS.enc.Base64)
+  const hash = await generateHash(rawString)
 
   // 取前8位并格式化为易读格式 XXXX-XXXX
   const code = hash.substring(0, 8).toUpperCase()
@@ -25,7 +42,10 @@ export function generateAuthCode(yearMonth: string, userSeed: string = ''): stri
 }
 
 // 验证授权码
-export function validateAuthCode(authCode: string, userSeed: string = ''): AuthStatus {
+export async function validateAuthCode(
+  authCode: string,
+  userSeed: string = '',
+): Promise<AuthStatus> {
   const currentDate = new Date()
   const currentYearMonth = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}`
 
@@ -33,7 +53,7 @@ export function validateAuthCode(authCode: string, userSeed: string = ''): AuthS
   const cleanCode = authCode.replace(/[-\s]/g, '').toUpperCase()
 
   // 验证当前月份的授权码
-  const expectedCode = generateAuthCode(currentYearMonth, userSeed).replace(/[-\s]/g, '')
+  const expectedCode = (await generateAuthCode(currentYearMonth, userSeed)).replace(/[-\s]/g, '')
 
   if (cleanCode === expectedCode) {
     // 计算本月剩余天数
@@ -57,10 +77,10 @@ export function validateAuthCode(authCode: string, userSeed: string = ''): AuthS
 }
 
 // 获取当前月份授权码（开发者用）
-export function generateCurrentMonthAuthCode(userSeed: string = ''): string {
+export async function generateCurrentMonthAuthCode(userSeed: string = ''): Promise<string> {
   const currentDate = new Date()
   const yearMonth = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-  return generateAuthCode(yearMonth, userSeed)
+  return await generateAuthCode(yearMonth, userSeed)
 }
 
 // 功能名称映射
@@ -72,13 +92,13 @@ export const FEATURE_NAMES: Record<ProFeature, string> = {
 }
 
 // 检查是否已授权（所有付费功能）
-export function isProAuthorized(): boolean {
+export async function isProAuthorized(): Promise<boolean> {
   const authData = localStorage.getItem('pro_auth')
   if (!authData) return false
 
   try {
     const { code, userSeed } = JSON.parse(authData)
-    const validation = validateAuthCode(code, userSeed)
+    const validation = await validateAuthCode(code, userSeed)
     return validation.isValid
   } catch {
     return false
@@ -86,13 +106,13 @@ export function isProAuthorized(): boolean {
 }
 
 // 检查特定功能是否已授权（兼容旧接口）
-export function isFeatureAuthorized(feature: ProFeature): boolean {
-  return isProAuthorized()
+export async function isFeatureAuthorized(feature: ProFeature): Promise<boolean> {
+  return await isProAuthorized()
 }
 
 // 保存授权码
-export function saveAuthCode(authCode: string, userSeed: string = ''): boolean {
-  const validation = validateAuthCode(authCode, userSeed)
+export async function saveAuthCode(authCode: string, userSeed: string = ''): Promise<boolean> {
+  const validation = await validateAuthCode(authCode, userSeed)
   if (validation.isValid) {
     localStorage.setItem('pro_auth', JSON.stringify({ code: authCode, userSeed }))
     return true
@@ -106,13 +126,13 @@ export function clearAuth(): void {
 }
 
 // 获取授权状态
-export function getAuthStatus(): AuthStatus {
+export async function getAuthStatus(): Promise<AuthStatus> {
   const authData = localStorage.getItem('pro_auth')
 
   if (authData) {
     try {
       const { code, userSeed } = JSON.parse(authData)
-      return validateAuthCode(code, userSeed)
+      return await validateAuthCode(code, userSeed)
     } catch {
       return {
         isValid: false,
