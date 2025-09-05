@@ -6,9 +6,15 @@
         <h2 class="text-2xl font-bold text-gray-900">班级管理</h2>
         <p class="text-gray-600 mt-1">管理所有班级信息，包括添加、编辑和删除班级</p>
       </div>
-      <el-button type="primary" size="large" @click="showAddDialog" :icon="Plus">
-        添加班级
-      </el-button>
+      <div class="flex items-center space-x-3">
+        <el-button type="success" size="large" @click="showImportDialog" :icon="Upload">
+          批量导入
+          <el-tag v-if="!isBatchImportAuthorized" size="small" type="warning" class="ml-1">付费</el-tag>
+        </el-button>
+        <el-button type="primary" size="large" @click="showAddDialog" :icon="Plus">
+          添加班级
+        </el-button>
+      </div>
     </div>
 
     <!-- 搜索和筛选 -->
@@ -63,6 +69,12 @@
         <el-table-column prop="studentCount" label="学生人数" width="100" align="center">
           <template #default="{ row }">
             <span class="text-gray-900 font-medium">{{ row.studentCount }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="headTeacherName" label="班主任" width="120">
+          <template #default="{ row }">
+            <span class="text-gray-600">{{ row.headTeacherName || '-' }}</span>
           </template>
         </el-table-column>
 
@@ -167,6 +179,23 @@
             style="width: 100%"
             placeholder="请输入学生人数"
           />
+        </el-form-item>
+
+        <el-form-item label="班主任" prop="headTeacherId">
+          <el-select
+            v-model="form.headTeacherId"
+            placeholder="请选择班主任（可选）"
+            style="width: 100%"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="teacher in teacherStore.teachers"
+              :key="teacher.id"
+              :label="`${teacher.name} (${teacher.subject})`"
+              :value="teacher.id"
+            />
+          </el-select>
         </el-form-item>
 
         <el-form-item label="描述" prop="description">
@@ -308,23 +337,115 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- Excel 导入对话框 -->
+    <el-dialog
+      v-model="importDialogVisible"
+      title="批量导入班级"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div v-if="!importPreviewVisible" class="space-y-6">
+        <!-- 模板下载区域 -->
+        <div class="border rounded-lg p-4">
+          <h4 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+            <el-icon class="mr-2 text-blue-500"><Download /></el-icon>
+            步骤一：下载导入模板
+          </h4>
+          <p class="text-gray-600 mb-4">请先下载 Excel 模板，按照模板格式填写数据</p>
+          <el-button type="primary" @click="downloadTemplate" :icon="Download">
+            下载模板
+          </el-button>
+        </div>
+
+        <!-- 文件上传区域 -->
+        <div class="border rounded-lg p-4">
+          <h4 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+            <el-icon class="mr-2 text-green-500"><Upload /></el-icon>
+            步骤二：上传填好的 Excel 文件
+          </h4>
+          <p class="text-gray-600 mb-4">支持 .xlsx 和 .xls 格式的 Excel 文件</p>
+          
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+            <el-icon class="text-4xl text-gray-400 mb-4"><Upload /></el-icon>
+            <p class="text-gray-600 mb-4">点击选择文件或拖拽文件到此区域</p>
+            <el-button type="primary" @click="selectFile">选择文件</el-button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept=".xlsx,.xls"
+              style="display: none"
+              @change="handleFileSelect"
+            />
+          </div>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h5 class="font-medium text-yellow-800 mb-2">注意事项：</h5>
+          <ul class="text-sm text-yellow-700 space-y-1">
+            <li>• 班级名称和年级为必填字段</li>
+            <li>• 学生人数必须在 1-100 之间</li>
+            <li>• 描述为可选字段</li>
+            <li>• 如果班级已存在，将会跳过该条记录</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 导入预览 -->
+      <div v-else class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="text-lg font-medium text-gray-900">导入预览</h4>
+          <el-tag type="info">共 {{ importData.length }} 条记录</el-tag>
+        </div>
+        
+        <div class="max-h-96 overflow-y-auto border rounded">
+          <el-table :data="importData" size="small" stripe>
+            <el-table-column prop="name" label="班级名称" width="150" />
+            <el-table-column prop="grade" label="年级" width="100" />
+            <el-table-column prop="studentCount" label="学生人数" width="120" />
+            <el-table-column prop="description" label="描述" min-width="200" />
+          </el-table>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <template v-if="!importPreviewVisible">
+            <el-button @click="importDialogVisible = false">取消</el-button>
+          </template>
+          <template v-else>
+            <el-button @click="cancelImport">返回</el-button>
+            <el-button type="primary" @click="confirmImport" :loading="importing">
+              确认导入
+            </el-button>
+          </template>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Search, Edit, Delete, School, Setting, Document } from '@element-plus/icons-vue'
+import { Plus, Search, Edit, Delete, School, Setting, Document, Upload, Download } from '@element-plus/icons-vue'
 import { useClassStore } from '@/stores/class'
 import { useScheduleStore } from '@/stores/schedule'
 import { useCourseStore } from '@/stores/course'
+import { useTeacherStore } from '@/stores/teacher'
+import { isFeatureAuthorized } from '@/utils/auth'
+import { useRouter } from 'vue-router'
 import type { Class } from '@/types'
 import { GRADE_OPTIONS } from '@/types'
 import dayjs from 'dayjs'
+import * as XLSX from 'xlsx'
 
 const classStore = useClassStore()
 const scheduleStore = useScheduleStore()
 const courseStore = useCourseStore()
+const teacherStore = useTeacherStore()
+const router = useRouter()
 
 // 响应式数据
 const loading = ref(false)
@@ -343,12 +464,21 @@ const currentRequirementId = ref('')
 const currentClassId = ref('')
 const requirementFormRef = ref<FormInstance>()
 
+// 导入功能相关
+const importDialogVisible = ref(false)
+const importing = ref(false)
+const isBatchImportAuthorized = ref(false)
+const fileInputRef = ref<HTMLInputElement>()
+const importData = ref<Class[]>([])
+const importPreviewVisible = ref(false)
+
 // 表单数据
 const form = reactive({
   name: '',
   grade: '',
   studentCount: 30,
   description: '',
+  headTeacherId: '',
 })
 
 // 课程需求表单
@@ -431,6 +561,7 @@ const editClass = (classItem: Class) => {
   form.grade = classItem.grade
   form.studentCount = classItem.studentCount
   form.description = classItem.description || ''
+  form.headTeacherId = classItem.headTeacherId || ''
   dialogVisible.value = true
 }
 
@@ -439,6 +570,7 @@ const resetForm = () => {
   form.grade = ''
   form.studentCount = 30
   form.description = ''
+  form.headTeacherId = ''
   formRef.value?.clearValidate()
 }
 
@@ -454,6 +586,8 @@ const handleSubmit = async () => {
       grade: form.grade.trim(),
       studentCount: form.studentCount,
       description: form.description.trim() || undefined,
+      headTeacherId: form.headTeacherId || undefined,
+      headTeacherName: form.headTeacherId ? teacherStore.getTeacherById(form.headTeacherId)?.name : undefined,
     }
 
     if (isEdit.value) {
@@ -596,11 +730,198 @@ const getScheduledHours = (subjectName: string) => {
   return classSchedules.filter((item) => item.subject === subjectName).length
 }
 
+// 检查批量导入授权
+const checkBatchImportAuth = async () => {
+  isBatchImportAuthorized.value = await isFeatureAuthorized('BATCH_IMPORT')
+}
+
+// 显示导入对话框
+const showImportDialog = async () => {
+  await checkBatchImportAuth()
+  if (!isBatchImportAuthorized.value) {
+    ElMessage.warning('批量导入是付费功能，请先获取授权码')
+    router.push('/auth')
+    return
+  }
+  importDialogVisible.value = true
+}
+
+// 下载模板
+const downloadTemplate = () => {
+  const templateData = [
+    ['班级名称', '年级', '学生人数', '描述'],
+    ['一班', '九年级', 45, '优秀班级'],
+    ['二班', '九年级', 42, '普通班级'],
+  ]
+  
+  const workbook = XLSX.utils.book_new()
+  const worksheet = XLSX.utils.aoa_to_sheet(templateData)
+  
+  // 设置列宽
+  worksheet['!cols'] = [
+    { wch: 15 }, // 班级名称
+    { wch: 15 }, // 年级
+    { wch: 15 }, // 学生人数
+    { wch: 30 }, // 描述
+  ]
+  
+  XLSX.utils.book_append_sheet(workbook, worksheet, '班级信息')
+  XLSX.writeFile(workbook, '班级导入模板.xlsx')
+  ElMessage.success('模板下载成功')
+}
+
+// 选择文件
+const selectFile = () => {
+  fileInputRef.value?.click()
+}
+
+// 处理文件选择
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  
+  if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    ElMessage.error('请选择 Excel 文件')
+    return
+  }
+  
+  parseExcelFile(file)
+}
+
+// 解析 Excel 文件
+const parseExcelFile = (file: File) => {
+  const reader = new FileReader()
+  
+  reader.onload = (e) => {
+    try {
+      const data = e.target?.result
+      const workbook = XLSX.read(data, { type: 'binary' })
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
+      
+      // 转换为 JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][]
+      
+      if (jsonData.length < 2) {
+        ElMessage.error('文件中没有数据')
+        return
+      }
+      
+      // 跳过表头，处理数据
+      const classes: Class[] = []
+      const errors: string[] = []
+      
+      for (let i = 1; i < jsonData.length; i++) {
+        const row = jsonData[i]
+        if (!row[0]) continue // 跳过空行
+        
+        const name = row[0]?.toString().trim()
+        const grade = row[1]?.toString().trim()
+        const studentCount = parseInt(row[2]?.toString() || '30')
+        const description = row[3]?.toString().trim() || ''
+        
+        // 验证必填字段
+        if (!name) {
+          errors.push(`第${i + 1}行：班级名称不能为空`)
+          continue
+        }
+        
+        if (!grade) {
+          errors.push(`第${i + 1}行：年级不能为空`)
+          continue
+        }
+        
+        // 验证学生人数
+        if (isNaN(studentCount) || studentCount < 1 || studentCount > 100) {
+          errors.push(`第${i + 1}行：学生人数必须在 1-100 之间`)
+          continue
+        }
+        
+        classes.push({
+          id: `class_${Date.now()}_${i}`,
+          name,
+          grade,
+          studentCount,
+          description,
+          courseRequirements: [],
+          createdAt: new Date().toISOString(),
+        })
+      }
+      
+      if (errors.length > 0) {
+        ElMessage.error(`发现${errors.length}个错误：\n${errors.join('\n')}`)
+        return
+      }
+      
+      if (classes.length === 0) {
+        ElMessage.error('没有可导入的数据')
+        return
+      }
+      
+      importData.value = classes
+      importPreviewVisible.value = true
+      
+    } catch (error) {
+      console.error('解析文件失败:', error)
+      ElMessage.error('文件解析失败，请检查文件格式')
+    }
+  }
+  
+  reader.readAsBinaryString(file)
+}
+
+// 确认导入
+const confirmImport = async () => {
+  if (importData.value.length === 0) return
+  
+  try {
+    importing.value = true
+    
+    // 批量添加班级
+    importData.value.forEach(classItem => {
+      classStore.addClass({
+        name: classItem.name,
+        grade: classItem.grade,
+        studentCount: classItem.studentCount,
+        description: classItem.description,
+      })
+    })
+    
+    ElMessage.success(`成功导入${importData.value.length}个班级`)
+    importDialogVisible.value = false
+    importPreviewVisible.value = false
+    importData.value = []
+    
+    // 清空文件输入
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ''
+    }
+    
+  } catch (error) {
+    console.error('导入失败:', error)
+    ElMessage.error('导入失败')
+  } finally {
+    importing.value = false
+  }
+}
+
+// 取消导入
+const cancelImport = () => {
+  importPreviewVisible.value = false
+  importData.value = []
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   classStore.loadFromStorage()
   scheduleStore.loadFromStorage()
   courseStore.loadFromStorage()
+  teacherStore.loadFromStorage()
+  await checkBatchImportAuth()
 })
 </script>
 

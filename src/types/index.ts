@@ -24,6 +24,8 @@ export interface Class {
   grade: string
   studentCount: number
   description?: string
+  headTeacherId?: string // 班主任教师ID
+  headTeacherName?: string // 班主任姓名（冗余字段，便于显示）
   courseRequirements: ClassCourseRequirement[] // 课程需求列表
   createdAt: string
 }

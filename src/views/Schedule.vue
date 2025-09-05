@@ -331,6 +331,132 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 课程需求设置面板 -->
+    <el-drawer
+      v-model="requirementPanelVisible"
+      title="课程需求设置"
+      direction="rtl"
+      size="500px"
+      :close-on-click-modal="false"
+    >
+      <template #header>
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <el-icon class="mr-2 text-green-500"><Setting /></el-icon>
+            {{ selectedClassName }} - 课程需求设置
+          </h3>
+        </div>
+      </template>
+
+      <div class="space-y-6">
+        <!-- 添加课程需求按钮 -->
+        <div>
+          <el-button type="primary" @click="showAddRequirement" :icon="Plus" size="default">
+            添加课程需求
+          </el-button>
+        </div>
+
+        <!-- 课程需求列表 -->
+        <div v-if="currentClassRequirements.length === 0" class="text-center py-8 text-gray-500">
+          <el-icon class="text-4xl mb-2"><Document /></el-icon>
+          <p>该班级暂无课程需求</p>
+          <p class="text-sm mt-1">点击上方按钮添加课程需求</p>
+        </div>
+
+        <el-table v-else :data="currentClassRequirements" stripe>
+          <el-table-column prop="subjectName" label="学科名称" min-width="120" />
+          <el-table-column prop="weeklyHours" label="每周课时" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag type="primary">{{ row.weeklyHours }} 节</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="已排课时" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag
+                :type="getScheduledHours(row.subjectName) >= row.weeklyHours ? 'success' : 'warning'"
+              >
+                {{ getScheduledHours(row.subjectName) }} 节
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="完成状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag
+                :type="getScheduledHours(row.subjectName) >= row.weeklyHours ? 'success' : 'info'"
+                size="small"
+              >
+                {{ getScheduledHours(row.subjectName) >= row.weeklyHours ? '已完成' : '进行中' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button size="small" type="primary" link @click="editRequirement(row)">
+                编辑
+              </el-button>
+              <el-button size="small" type="danger" link @click="deleteRequirement(row.id)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-drawer>
+
+    <!-- 添加/编辑课程需求对话框 -->
+    <el-dialog
+      v-model="addRequirementDialogVisible"
+      :title="isEditRequirement ? '编辑课程需求' : '添加课程需求'"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="requirementFormRef"
+        :model="requirementForm"
+        :rules="requirementRules"
+        label-width="100px"
+      >
+        <el-form-item label="学科名称" prop="subjectName">
+          <el-select
+            v-model="requirementForm.subjectName"
+            placeholder="请选择学科"
+            style="width: 100%"
+            filterable
+            allow-create
+          >
+            <el-option
+              v-for="subject in subjectOptions"
+              :key="subject"
+              :label="subject"
+              :value="subject"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="每周课时" prop="weeklyHours">
+          <el-input-number
+            v-model="requirementForm.weeklyHours"
+            :min="1"
+            :max="20"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="addRequirementDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="handleRequirementSubmit"
+            :loading="requirementSubmitting"
+          >
+            {{ isEditRequirement ? '保存' : '添加' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -357,7 +483,7 @@ import { useCourseStore } from '@/stores/course'
 import { useScheduleStore } from '@/stores/schedule'
 import { useClassStore } from '@/stores/class'
 import { isFeatureAuthorized } from '@/utils/auth'
-import type { Course, ScheduleItem } from '@/types'
+import type { Course, ScheduleItem, ClassCourseRequirement } from '@/types'
 import { WEEKDAYS } from '@/types'
 
 const router = useRouter()
@@ -699,13 +825,117 @@ const clearClassSchedule = async () => {
   }
 }
 
+// 课程需求设置相关状态
+const requirementPanelVisible = ref(false)
+const addRequirementDialogVisible = ref(false)
+const isEditRequirement = ref(false)
+const currentRequirementId = ref('')
+const requirementSubmitting = ref(false)
+
+// 课程需求表单
+const requirementForm = reactive({
+  subjectName: '',
+  weeklyHours: 2,
+})
+
+// 课程需求表单引用
+const requirementFormRef = ref<FormInstance>()
+
+// 课程需求表单验证规则
+const requirementRules: FormRules = {
+  subjectName: [{ required: true, message: '请输入学科名称', trigger: 'blur' }],
+  weeklyHours: [{ required: true, message: '请输入每周课时数', trigger: 'blur' }],
+}
+
+// 学科选项（常用学科）
+const subjectOptions = [
+  '语文', '数学', '英语', '物理', '化学', '生物',
+  '政治', '历史', '地理', '体育', '音乐', '美术',
+  '信息技术', '通用技术', '心理健康', '班会'
+]
+
 const showRequirementDialog = () => {
   if (!selectedClass.value) {
     ElMessage.warning('请先选择班级')
     return
   }
-  ElMessage.info('跳转到班级管理页面进行课程需求设置')
-  window.open('/classes', '_blank')
+  requirementPanelVisible.value = true
+}
+
+// 显示添加课程需求对话框
+const showAddRequirement = () => {
+  isEditRequirement.value = false
+  requirementForm.subjectName = ''
+  requirementForm.weeklyHours = 2
+  addRequirementDialogVisible.value = true
+}
+
+// 编辑课程需求
+const editRequirement = (requirement: ClassCourseRequirement) => {
+  isEditRequirement.value = true
+  currentRequirementId.value = requirement.id
+  requirementForm.subjectName = requirement.subjectName
+  requirementForm.weeklyHours = requirement.weeklyHours
+  addRequirementDialogVisible.value = true
+}
+
+// 提交课程需求表单
+const handleRequirementSubmit = async () => {
+  if (!requirementFormRef.value || !selectedClass.value) return
+
+  try {
+    await requirementFormRef.value.validate()
+    requirementSubmitting.value = true
+
+    if (isEditRequirement.value) {
+      // 编辑课程需求
+      classStore.updateCourseRequirement(selectedClass.value, currentRequirementId.value, {
+        subjectName: requirementForm.subjectName,
+        weeklyHours: requirementForm.weeklyHours,
+      })
+      ElMessage.success('课程需求更新成功')
+    } else {
+      // 检查是否已存在相同学科的需求
+      const existing = currentClassRequirements.value.find(
+        (req) => req.subjectName === requirementForm.subjectName,
+      )
+      if (existing) {
+        ElMessage.error('该学科的课程需求已存在')
+        return
+      }
+
+      // 添加课程需求
+      classStore.addCourseRequirement(selectedClass.value, {
+        subjectName: requirementForm.subjectName,
+        weeklyHours: requirementForm.weeklyHours,
+      })
+      ElMessage.success('课程需求添加成功')
+    }
+
+    addRequirementDialogVisible.value = false
+  } catch (error: any) {
+    ElMessage.error(error.message || '操作失败')
+  } finally {
+    requirementSubmitting.value = false
+  }
+}
+
+// 删除课程需求
+const deleteRequirement = async (requirementId: string) => {
+  if (!selectedClass.value) return
+
+  try {
+    await ElMessageBox.confirm('确定要删除这个课程需求吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
+    classStore.deleteCourseRequirement(selectedClass.value, requirementId)
+    ElMessage.success('课程需求删除成功')
+  } catch {
+    // 用户取消删除
+  }
 }
 
 // 智能排课

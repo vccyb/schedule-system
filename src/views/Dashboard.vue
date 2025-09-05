@@ -339,6 +339,7 @@ import { useCourseStore } from '@/stores/course'
 import { useScheduleStore } from '@/stores/schedule'
 import { useClassStore } from '@/stores/class'
 import { isFeatureAuthorized } from '@/utils/auth'
+
 import dayjs from 'dayjs'
 
 const router = useRouter()

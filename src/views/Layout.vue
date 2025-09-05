@@ -5,14 +5,19 @@
       <el-aside class="bg-white shadow-lg" width="250px">
         <div class="p-6 border-b border-gray-200">
           <h1 class="text-xl font-bold text-gray-800 flex items-center">
-            <el-icon class="mr-2 text-primary-500">
+            <el-icon class="mr-2 text-blue-500">
               <Calendar />
             </el-icon>
             简单排课
           </h1>
         </div>
 
-        <el-menu :default-active="$route.path" class="border-none" router unique-opened>
+        <el-menu 
+          :default-active="$route.path" 
+          class="border-none" 
+          router 
+          unique-opened
+        >
           <el-menu-item index="/dashboard">
             <el-icon><Odometer /></el-icon>
             <span>仪表板</span>
@@ -42,21 +47,13 @@
             <el-icon><Grid /></el-icon>
             <span>课程表</span>
           </el-menu-item>
-
-          <!-- 开发者工具（仅在开发环境显示）
-          <el-menu-item v-if="isDev" index="/dev-tools" class="dev-menu-item">
-            <el-icon><Tools /></el-icon>
-            <span>开发者工具</span>
-          </el-menu-item> -->
         </el-menu>
       </el-aside>
 
       <!-- 主内容区 -->
       <el-main class="p-0">
         <!-- 顶部导航栏 -->
-        <div
-          class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between"
-        >
+        <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div class="flex items-center">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item>简单排课</el-breadcrumb-item>
@@ -106,11 +103,17 @@
         </div>
 
         <!-- 页面内容 -->
-        <div class="p-6 h-full overflow-auto">
+        <div 
+          :class="settingsStore.fontSizeClass"
+          class="p-6 h-full overflow-auto"
+        >
           <RouterView />
         </div>
       </el-main>
     </el-container>
+
+    <!-- 设置面板 -->
+    <SettingsPanel />
 
     <!-- 数据导入对话框 -->
     <el-dialog
@@ -162,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
@@ -186,6 +189,8 @@ import { useCourseStore } from '@/stores/course'
 import { useScheduleStore } from '@/stores/schedule'
 import { useClassStore } from '@/stores/class'
 import { useDataManagerStore } from '@/stores/dataManager'
+import { useSettingsStore } from '@/stores/settings'
+import SettingsPanel from '@/components/SettingsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -195,6 +200,7 @@ const courseStore = useCourseStore()
 const scheduleStore = useScheduleStore()
 const classStore = useClassStore()
 const dataManagerStore = useDataManagerStore()
+const settingsStore = useSettingsStore()
 
 // 检查是否为开发环境
 const isDev = import.meta.env.DEV
@@ -296,6 +302,11 @@ const handleFileSelect = async (event: Event) => {
 const triggerFileSelect = () => {
   fileInputRef.value?.click()
 }
+
+// 初始化设置
+onMounted(() => {
+  settingsStore.loadFromStorage()
+})
 </script>
 
 <style scoped>

@@ -1,0 +1,449 @@
+/* 基础样式 */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* 全局基础样式 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+}
+
+.dark body {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
+/* Element Plus 表格样式 */
+.el-table th.el-table__cell {
+  background-color: #f8fafc !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+}
+
+.dark .el-table th.el-table__cell {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+/* 课程表网格样式 */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 100px repeat(7, 1fr);
+  gap: 1px;
+  background-color: #e5e7eb;
+}
+
+.dark .schedule-grid {
+  background-color: #4b5563;
+}
+
+.schedule-cell {
+  background-color: white;
+  min-height: 60px;
+  position: relative;
+  border: 1px solid #e5e7eb;
+}
+
+.schedule-cell:hover {
+  background-color: #f3f4f6;
+}
+
+.dark .schedule-cell {
+  background-color: #374151;
+  border-color: #6b7280;
+}
+
+.dark .schedule-cell:hover {
+  background-color: #4b5563;
+}
+
+.course-block {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: white;
+  cursor: move;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.course-block:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .course-block:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* 字体大小主题类 */
+html.font-medium {
+  font-size: 16px;
+}
+
+html.font-large {
+  font-size: 18px;
+}
+
+html.font-extra-large {
+  font-size: 20px;
+}
+
+/* 暗色主题适配 */
+.dark {
+  color-scheme: dark;
+}
+
+/* Element Plus 暗色主题变量覆盖 */
+.dark .el-card {
+  --el-card-bg-color: #374151;
+  --el-card-border-color: #4b5563;
+}
+
+.dark .el-table {
+  --el-table-bg-color: #374151;
+  --el-table-tr-bg-color: #374151;
+  --el-table-row-hover-bg-color: #4b5563;
+  --el-table-header-bg-color: #374151;
+}
+
+.dark .el-input {
+  --el-input-bg-color: #4b5563;
+  --el-input-border-color: #6b7280;
+  --el-input-text-color: #e5e7eb;
+  --el-input-placeholder-color: #9ca3af;
+}
+
+.dark .el-select {
+  --el-select-input-bg-color: #4b5563;
+  --el-select-input-border-color: #6b7280;
+}
+
+.dark .el-button {
+  --el-button-bg-color: #4b5563;
+  --el-button-border-color: #6b7280;
+  --el-button-text-color: #e5e7eb;
+}
+
+.dark .el-dialog {
+  --el-dialog-bg-color: #374151;
+  --el-dialog-border-color: #4b5563;
+}
+
+.dark .el-drawer {
+  --el-drawer-bg-color: #374151;
+}
+
+.dark .el-dropdown-menu {
+  --el-dropdown-menu-bg-color: #374151;
+  --el-dropdown-menu-border-color: #4b5563;
+}
+
+.dark .el-menu {
+  --el-menu-bg-color: #374151;
+  --el-menu-text-color: #e5e7eb;
+  --el-menu-hover-bg-color: #4b5563;
+}
+
+/* 自定义暗色主题样式 - 背景色 */
+.dark .bg-white {
+  background-color: #374151 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: #1e3a8a !important;
+}
+
+.dark .bg-green-50 {
+  background-color: #14532d !important;
+}
+
+.dark .bg-purple-50 {
+  background-color: #581c87 !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: #9a3412 !important;
+}
+
+.dark .bg-yellow-50 {
+  background-color: #92400e !important;
+}
+
+.dark .bg-indigo-100 {
+  background-color: #3730a3 !important;
+}
+
+.dark .bg-green-100 {
+  background-color: #166534 !important;
+}
+
+.dark .bg-purple-100 {
+  background-color: #6b21a8 !important;
+}
+
+.dark .bg-orange-100 {
+  background-color: #c2410c !important;
+}
+
+/* 自定义暗色主题样式 - 文字颜色 */
+.dark .text-gray-900 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-800 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-400 {
+  color: #6b7280 !important;
+}
+
+/* 自定义暗色主题样式 - 边框颜色 */
+.dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #6b7280 !important;
+}
+
+.dark .border-blue-200 {
+  border-color: #3b82f6 !important;
+}
+
+.dark .border-green-200 {
+  border-color: #22c55e !important;
+}
+
+.dark .border-yellow-200 {
+  border-color: #eab308 !important;
+}
+
+/* 特殊组件适配 */
+.dark .shadow-sm,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* 平滑过渡效果 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 确保所有卡片和容器在暗色主题下有正确的背景 */
+.dark .schedule-cell,
+.dark .class-card {
+  background-color: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+.dark .class-card:hover {
+  background-color: #374151 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* 渐变背景适配 */
+.dark .bg-gradient-to-r {
+  background: linear-gradient(to right, #1f2937, #374151) !important;
+}
+
+/* 特殊背景色适配 */
+.dark .bg-white\/10 {
+  background-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.dark .bg-white\/25 {
+  background-color: rgba(75, 85, 99, 0.5) !important;
+}
+
+.dark .bg-white\/30 {
+  background-color: rgba(75, 85, 99, 0.6) !important;
+}
+
+.dark .border-white\/20 {
+  border-color: rgba(107, 114, 128, 0.4) !important;
+}
+
+.dark .border-white\/40 {
+  border-color: rgba(107, 114, 128, 0.6) !important;
+}
+
+/* 按钮特殊样式适配 */
+.dark .dev-menu-item {
+  border-left-color: #f59e0b !important;
+  background-color: #92400e !important;
+}
+
+.dark .dev-menu-item:hover {
+  background-color: #f59e0b !important;
+}
+
+/* 字体大小主题类 */
+html.font-medium {
+  font-size: 16px;
+}
+
+html.font-large {
+  font-size: 18px;
+}
+
+html.font-extra-large {
+  font-size: 20px;
+}
+
+/* 暗色主题适配 */
+.dark {
+  color-scheme: dark;
+}
+
+/* Element Plus 暗色主题变量覆盖 */
+.dark .el-card {
+  --el-card-bg-color: #374151;
+  --el-card-border-color: #4b5563;
+}
+
+.dark .el-table {
+  --el-table-bg-color: #374151;
+  --el-table-tr-bg-color: #374151;
+  --el-table-row-hover-bg-color: #4b5563;
+}
+
+.dark .el-input {
+  --el-input-bg-color: #4b5563;
+  --el-input-border-color: #6b7280;
+  --el-input-text-color: #e5e7eb;
+}
+
+.dark .el-select {
+  --el-select-input-bg-color: #4b5563;
+  --el-select-input-border-color: #6b7280;
+}
+
+.dark .el-button {
+  --el-button-bg-color: #4b5563;
+  --el-button-border-color: #6b7280;
+  --el-button-text-color: #e5e7eb;
+}
+
+.dark .el-dialog {
+  --el-dialog-bg-color: #374151;
+  --el-dialog-border-color: #4b5563;
+}
+
+.dark .el-drawer {
+  --el-drawer-bg-color: #374151;
+}
+
+.dark .el-menu {
+  --el-menu-bg-color: #374151;
+  --el-menu-text-color: #e5e7eb;
+  --el-menu-hover-bg-color: #4b5563;
+}
+
+/* 自定义暗色主题样式 */
+.dark .bg-white {
+  background-color: #374151 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark .text-gray-900 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-800 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #6b7280 !important;
+}
+
+/* 确保文字在暗色主题下可读 */
+.dark .shadow-sm,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* 平滑过渡效果 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 确保所有卡片和容器在暗色主题下有正确的背景 */
+.dark .schedule-cell,
+.dark .class-card,
+.dark .course-block {
+  background-color: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+.dark .course-block {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .course-block:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
