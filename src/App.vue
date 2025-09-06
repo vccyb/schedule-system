@@ -11,7 +11,6 @@ import { RouterView } from 'vue-router'
 <style>
 #app {
   height: 100vh;
-  overflow: hidden; /* 防止双滚动条 */
 }
 
 * {
