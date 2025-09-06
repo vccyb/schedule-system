@@ -100,7 +100,7 @@
         </div>
 
         <!-- 页面内容 -->
-        <div :class="settingsStore.fontSizeClass" class="p-6 h-full overflow-auto">
+        <div :class="settingsStore.fontSizeClass" class="page-content">
           <RouterView />
         </div>
       </el-main>
@@ -338,5 +338,32 @@ onMounted(() => {
 .dev-menu-item.is-active {
   background-color: #f59e0b !important;
   color: white !important;
+}
+
+/* 页面内容区域样式优化 */
+.page-content {
+  padding: 24px;
+  min-height: calc(100vh - 73px); /* 最小高度：减去顶部导航栏高度 */
+  overflow-x: hidden;
+}
+
+/* 优化滚动条样式 */
+.page-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.page-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.page-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>

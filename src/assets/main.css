@@ -37,6 +37,15 @@ body {
   color: #e5e7eb !important;
 }
 
+/* 禁用表格内部滚动条，使用分页来处理大数据量 */
+.el-table__body-wrapper {
+  overflow: visible !important;
+}
+
+.el-table {
+  overflow: visible !important;
+}
+
 /* 课程表网格样式 */
 .schedule-grid {
   display: grid;

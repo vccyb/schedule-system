@@ -102,8 +102,6 @@
         <el-text class="text-sm text-gray-600">
           显示课程数: {{ filteredScheduleItems.length }}
         </el-text>
-
-        <el-text class="text-sm text-gray-600"> 利用率: {{ utilizationRate }}% </el-text>
       </div>
     </div>
 
@@ -165,79 +163,6 @@
                     {{ getScheduleItem(day.value, timeSlot.id)?.subject }}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 统计信息 -->
-        <div class="mt-8 print-stats">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">课程表统计</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="stat-card">
-              <div class="stat-label">当前课程数</div>
-              <div class="stat-value">{{ filteredScheduleItems.length }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">系统总课程数</div>
-              <div class="stat-value">{{ courseStore.courseCount }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">系统总教师数</div>
-              <div class="stat-value">{{ teacherStore.teacherCount }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">系统已排课时</div>
-              <div class="stat-value">{{ scheduleStore.scheduleCount }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">课程表利用率</div>
-              <div class="stat-value">{{ utilizationRate }}%</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">涉及教师</div>
-              <div class="stat-value">{{ uniqueTeachers.length }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">覆盖学科</div>
-              <div class="stat-value">{{ uniqueSubjects.length }}</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-label">
-                {{ currentView === ViewType.CLASS ? '班级完成度' : '教师负荷' }}
-              </div>
-              <div class="stat-value">{{ currentViewCompletionRate }}%</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 教师课程统计 -->
-        <div class="mt-8 print-teacher-stats">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">教师课程统计</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="teacher in teacherStats" :key="teacher.id" class="teacher-stat-card">
-              <div class="flex items-center mb-2">
-                <el-avatar
-                  :size="32"
-                  class="mr-2"
-                  :style="{ backgroundColor: getAvatarColor(teacher.name) }"
-                >
-                  {{ teacher.name.charAt(0) }}
-                </el-avatar>
-                <div>
-                  <div class="font-medium text-gray-900">{{ teacher.name }}</div>
-                  <div class="text-sm text-gray-500">{{ teacher.subject }}</div>
-                </div>
-              </div>
-              <div class="text-sm text-gray-600">
-                课程数: {{ teacher.courseCount }} | 课时数: {{ teacher.scheduleCount }}
               </div>
             </div>
           </div>
@@ -376,71 +301,11 @@ const filteredScheduleItems = computed(() => {
   return items
 })
 
-// 课程表利用率
-const utilizationRate = computed(() => {
-  const totalSlots = scheduleStore.timeSlots.length * weekDays.length
-  const usedSlots = filteredScheduleItems.value.length
-  return totalSlots > 0 ? Math.round((usedSlots / totalSlots) * 100) : 0
-})
-
-// 教师统计
-const teacherStats = computed(() => {
-  return teacherStore.teachers
-    .map((teacher) => {
-      const teacherCourses = courseStore.getCoursesByTeacher(teacher.id)
-      const teacherSchedules = scheduleStore.getScheduleByTeacher(teacher.id)
-
-      return {
-        ...teacher,
-        courseCount: teacherCourses.length,
-        scheduleCount: teacherSchedules.length,
-      }
-    })
-    .sort((a, b) => b.scheduleCount - a.scheduleCount)
-})
-
-// 当前视图涉及的唯一教师
-const uniqueTeachers = computed(() => {
-  const teacherIds = [...new Set(filteredScheduleItems.value.map((item) => item.teacherId))]
-  return teacherIds
-})
-
-// 当前视图覆盖的唯一学科
-const uniqueSubjects = computed(() => {
-  const subjects = [...new Set(filteredScheduleItems.value.map((item) => item.subject))]
-  return subjects
-})
-
-// 当前视角完成度计算
-const currentViewCompletionRate = computed(() => {
-  if (currentView.value === ViewType.CLASS && selectedClass.value) {
-    // 班级视角：计算课程需求完成度
-    const requirements = classStore.getClassRequirements(selectedClass.value)
-    if (requirements.length === 0) return 0
-
-    const totalRequired = requirements.reduce((sum, req) => sum + req.weeklyHours, 0)
-    const totalScheduled = filteredScheduleItems.value.length
-    return totalRequired > 0 ? Math.round((totalScheduled / totalRequired) * 100) : 0
-  } else if (currentView.value === ViewType.TEACHER && selectedTeacher.value) {
-    // 教师视角：计算教师工作负荷（以每天最多8节课为基准）
-    const maxCoursesPerWeek = scheduleStore.timeSlots.length * 5 // 5个工作日
-    const teacherCourses = filteredScheduleItems.value.length
-    return maxCoursesPerWeek > 0 ? Math.round((teacherCourses / maxCoursesPerWeek) * 100) : 0
-  }
-  return 0
-})
-
 // 方法
 const getScheduleItem = (dayOfWeek: number, timeSlotId: string): ScheduleItem | undefined => {
   return filteredScheduleItems.value.find(
     (item) => item.dayOfWeek === dayOfWeek && item.timeSlotId === timeSlotId,
   )
-}
-
-const getAvatarColor = (name: string) => {
-  const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399']
-  const index = name.charCodeAt(0) % colors.length
-  return colors[index]
 }
 
 const filterTimetable = () => {
@@ -534,24 +399,6 @@ const exportToExcel = () => {
 
     // 添加工作表到工作簿
     XLSX.utils.book_append_sheet(workbook, worksheet, '课程表')
-
-    // 创建统计表
-    const statsData: (string | number)[][] = [
-      ['统计项目', '数值'],
-      ['总课程数', courseStore.courseCount],
-      ['总教师数', teacherStore.teacherCount],
-      ['已排课时', scheduleStore.scheduleCount],
-      ['利用率', `${utilizationRate.value}%`],
-      [''],
-      ['教师', '学科', '课程数', '课时数'],
-    ]
-
-    teacherStats.value.forEach((teacher) => {
-      statsData.push([teacher.name, teacher.subject, teacher.courseCount, teacher.scheduleCount])
-    })
-
-    const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData)
-    XLSX.utils.book_append_sheet(workbook, statsWorksheet, '统计信息')
 
     // 导出文件
     const fileName = `课程表_${dayjs().format('YYYY-MM-DD')}.xlsx`
@@ -749,33 +596,6 @@ onMounted(async () => {
   opacity: 0.8;
 }
 
-.stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #374151;
-}
-
-.teacher-stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-}
-
 /* 打印样式 */
 @media print {
   .timetable-page {
@@ -793,11 +613,6 @@ onMounted(async () => {
   .course-content {
     font-size: 10px;
     padding: 4px;
-  }
-
-  .stat-card,
-  .teacher-stat-card {
-    break-inside: avoid;
   }
 }
 

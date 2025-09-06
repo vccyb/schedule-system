@@ -76,6 +76,13 @@ const router = createRouter({
           },
         ]
       : []),
+    // 404 页面 - 必须放在最后
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFound.vue'),
+      meta: { title: '页面未找到' },
+    },
   ],
 })
 

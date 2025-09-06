@@ -29,6 +29,7 @@
             :prefix-icon="Search"
             clearable
             size="large"
+            @input="resetPagination"
           />
         </div>
         <el-select
@@ -37,6 +38,7 @@
           clearable
           size="large"
           style="width: 200px"
+          @change="resetPagination"
         >
           <el-option
             v-for="subject in subjectOptions"
@@ -50,7 +52,13 @@
 
     <!-- 教师列表 -->
     <div class="bg-white rounded-lg shadow-sm">
-      <el-table :data="filteredTeachers" stripe style="width: 100%" v-loading="loading">
+      <el-table
+        :data="paginatedTeachers"
+        stripe
+        style="width: 100%"
+        v-loading="loading"
+        :show-overflow-tooltip="true"
+      >
         <el-table-column prop="name" label="姓名" min-width="120">
           <template #default="{ row }">
             <div class="flex items-center">
@@ -114,6 +122,20 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div v-if="total > 0" class="flex justify-between items-center p-4 border-t">
+        <div class="text-sm text-gray-500">共 {{ total }} 条记录，当前第 {{ currentPage }} 页</div>
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
 
       <!-- 空状态 -->
       <div v-if="filteredTeachers.length === 0 && !loading" class="text-center py-16">
@@ -294,6 +316,10 @@ const searchText = ref('')
 const selectedSubject = ref('')
 const formRef = ref<FormInstance>()
 
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(10)
+
 // 导入功能相关
 const importDialogVisible = ref(false)
 const importing = ref(false)
@@ -364,10 +390,35 @@ const filteredTeachers = computed(() => {
   return teachers
 })
 
+// 分页后的数据
+const paginatedTeachers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredTeachers.value.slice(start, end)
+})
+
+// 总数量
+const total = computed(() => filteredTeachers.value.length)
+
 const subjectOptions = computed(() => {
   const subjects = [...new Set(teacherStore.teachers.map((t) => t.subject))]
   return subjects.sort()
 })
+
+// 分页方法
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置到第一页
+}
+
+// 搜索或筛选时重置分页
+const resetPagination = () => {
+  currentPage.value = 1
+}
 
 // 方法
 const showAddDialog = () => {

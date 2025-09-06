@@ -44,6 +44,7 @@
             :prefix-icon="Search"
             clearable
             size="large"
+            @input="resetPagination"
           />
         </div>
         <el-select
@@ -52,6 +53,7 @@
           clearable
           size="large"
           style="width: 200px"
+          @change="resetPagination"
         >
           <el-option
             v-for="subject in subjectOptions"
@@ -67,6 +69,7 @@
           size="large"
           style="width: 200px"
           filterable
+          @change="resetPagination"
         >
           <el-option
             v-for="teacher in teacherStore.teachers"
@@ -80,7 +83,13 @@
 
     <!-- 课程列表 -->
     <div v-if="teacherStore.teacherCount > 0" class="bg-white rounded-lg shadow-sm">
-      <el-table :data="filteredCourses" stripe style="width: 100%" v-loading="loading">
+      <el-table
+        :data="paginatedCourses"
+        stripe
+        style="width: 100%"
+        v-loading="loading"
+        :show-overflow-tooltip="true"
+      >
         <el-table-column prop="name" label="课程名称" min-width="180">
           <template #default="{ row }">
             <div class="flex items-center">
@@ -150,6 +159,20 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div v-if="total > 0" class="flex justify-between items-center p-4 border-t">
+        <div class="text-sm text-gray-500">共 {{ total }} 条记录，当前第 {{ currentPage }} 页</div>
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
 
       <!-- 空状态 -->
       <div v-if="filteredCourses.length === 0 && !loading" class="text-center py-16">
@@ -253,6 +276,10 @@ const selectedSubject = ref('')
 const selectedTeacher = ref('')
 const formRef = ref<FormInstance>()
 
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(10)
+
 // 表单数据
 const form = reactive({
   name: '',
@@ -300,10 +327,34 @@ const filteredCourses = computed(() => {
   return courses
 })
 
+// 分页后的数据
+const paginatedCourses = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredCourses.value.slice(start, end)
+})
+
+// 总数量
+const total = computed(() => filteredCourses.value.length)
+
 const subjectOptions = computed(() => {
   const subjects = [...new Set(courseStore.courses.map((c) => c.subject))]
   return subjects.sort()
 })
+
+// 分页方法
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+}
+
+const resetPagination = () => {
+  currentPage.value = 1
+}
 
 // 方法
 const showAddDialog = () => {

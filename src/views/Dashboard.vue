@@ -440,22 +440,22 @@ const startGuide = () => {
   if (teacherStore.teacherCount === 0) {
     ElMessage.info('开始第一步：添加教师信息')
     setTimeout(() => {
-      window.location.href = '/teachers'
+      router.push('/teachers')
     }, 500)
   } else if (classStore.classCount === 0) {
     ElMessage.info('进行第二步：创建班级')
     setTimeout(() => {
-      window.location.href = '/classes'
+      router.push('/classes')
     }, 500)
   } else if (courseStore.courseCount === 0) {
     ElMessage.info('进行第三步：添加课程')
     setTimeout(() => {
-      window.location.href = '/courses'
+      router.push('/courses')
     }, 500)
   } else {
     ElMessage.info('开始智能排课')
     setTimeout(() => {
-      window.location.href = '/schedule'
+      router.push('/schedule')
     }, 500)
   }
 }

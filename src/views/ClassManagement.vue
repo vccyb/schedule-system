@@ -29,6 +29,7 @@
             :prefix-icon="Search"
             clearable
             size="large"
+            @input="resetPagination"
           />
         </div>
         <el-select
@@ -37,6 +38,7 @@
           clearable
           size="large"
           style="width: 200px"
+          @change="resetPagination"
         >
           <el-option v-for="grade in gradeOptions" :key="grade" :label="grade" :value="grade" />
         </el-select>
@@ -45,7 +47,13 @@
 
     <!-- 班级列表 -->
     <div class="bg-white rounded-lg shadow-sm">
-      <el-table :data="filteredClasses" stripe style="width: 100%" v-loading="loading">
+      <el-table
+        :data="paginatedClasses"
+        stripe
+        style="width: 100%"
+        v-loading="loading"
+        :show-overflow-tooltip="true"
+      >
         <el-table-column prop="name" label="班级名称" min-width="150">
           <template #default="{ row }">
             <div class="flex items-center">
@@ -128,6 +136,20 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div v-if="total > 0" class="flex justify-between items-center p-4 border-t">
+        <div class="text-sm text-gray-500">共 {{ total }} 条记录，当前第 {{ currentPage }} 页</div>
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
 
       <!-- 空状态 -->
       <div v-if="filteredClasses.length === 0 && !loading" class="text-center py-16">
@@ -229,10 +251,21 @@
       width="700px"
       :close-on-click-modal="false"
     >
-      <div class="mb-4">
-        <el-button type="primary" @click="showAddRequirement" :icon="Plus" size="small">
-          添加课程需求
-        </el-button>
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <el-button type="primary" @click="showAddRequirement" :icon="Plus" size="small">
+            添加课程需求
+          </el-button>
+          <el-button
+            type="success"
+            @click="showCopyRequirementsDialog"
+            :icon="DocumentCopy"
+            size="small"
+          >
+            复制其他班级需求
+          </el-button>
+        </div>
+        <div class="text-sm text-gray-500">共 {{ currentClassRequirements.length }} 个课程需求</div>
       </div>
 
       <el-table :data="currentClassRequirements" stripe>
@@ -340,6 +373,91 @@
       </template>
     </el-dialog>
 
+    <!-- 复制课程需求对话框 -->
+    <el-dialog
+      v-model="copyRequirementsDialogVisible"
+      title="复制课程需求"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div class="space-y-4">
+        <div class="mb-4">
+          <p class="text-gray-600 mb-3">
+            选择要复制课程需求的源班级，系统将把该班级的所有课程需求复制到当前班级。
+          </p>
+          <el-alert
+            v-if="currentClassRequirements.length > 0"
+            title="注意：复制操作将替换当前班级的所有课程需求"
+            type="warning"
+            show-icon
+            :closable="false"
+            class="mb-4"
+          />
+        </div>
+
+        <!-- 源班级选择 -->
+        <el-form-item label="选择源班级：" label-width="100px">
+          <el-select
+            v-model="selectedSourceClass"
+            placeholder="请选择要复制课程需求的班级"
+            style="width: 100%"
+            filterable
+            @change="onSourceClassChange"
+          >
+            <el-option
+              v-for="cls in availableSourceClasses"
+              :key="cls.id"
+              :label="`${cls.name} (${cls.grade})`"
+              :value="cls.id"
+            >
+              <div class="flex items-center justify-between">
+                <span>{{ cls.name }} ({{ cls.grade }})</span>
+                <el-tag size="small" type="info">
+                  {{ cls.courseRequirements.length }} 个需求
+                </el-tag>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 预览要复制的课程需求 -->
+        <div v-if="selectedSourceClass && sourceClassRequirements.length > 0" class="mt-4">
+          <h4 class="text-sm font-medium text-gray-900 mb-3">预览要复制的课程需求：</h4>
+          <div class="border rounded-lg p-3 bg-gray-50 max-h-60 overflow-y-auto">
+            <div class="space-y-2">
+              <div
+                v-for="req in sourceClassRequirements"
+                :key="req.id"
+                class="flex items-center justify-between p-2 bg-white rounded border"
+              >
+                <span class="font-medium">{{ req.subjectName }}</span>
+                <el-tag size="small" type="primary">{{ req.weeklyHours }} 节/周</el-tag>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="selectedSourceClass" class="text-center py-4 text-gray-500">
+          <el-icon class="text-2xl mb-2"><Document /></el-icon>
+          <p>该班级暂无课程需求</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="copyRequirementsDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="handleCopyRequirements"
+            :disabled="!selectedSourceClass || sourceClassRequirements.length === 0"
+            :loading="copySubmitting"
+          >
+            开始复制
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- Excel 导入对话框 -->
     <el-dialog
       v-model="importDialogVisible"
@@ -441,6 +559,7 @@ import {
   School,
   Setting,
   Document,
+  DocumentCopy,
   Upload,
   Download,
 } from '@element-plus/icons-vue'
@@ -450,7 +569,7 @@ import { useCourseStore } from '@/stores/course'
 import { useTeacherStore } from '@/stores/teacher'
 import { isFeatureAuthorized } from '@/utils/auth'
 import { useRouter } from 'vue-router'
-import type { Class } from '@/types'
+import type { Class, ClassCourseRequirement } from '@/types'
 import { GRADE_OPTIONS } from '@/types'
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
@@ -478,6 +597,10 @@ const currentRequirementId = ref('')
 const currentClassId = ref('')
 const requirementFormRef = ref<FormInstance>()
 
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(10)
+
 // 导入功能相关
 const importDialogVisible = ref(false)
 const importing = ref(false)
@@ -485,6 +608,12 @@ const isBatchImportAuthorized = ref(false)
 const fileInputRef = ref<HTMLInputElement>()
 const importData = ref<Class[]>([])
 const importPreviewVisible = ref(false)
+
+// 复制课程需求功能相关
+const copyRequirementsDialogVisible = ref(false)
+const selectedSourceClass = ref('')
+const sourceClassRequirements = ref<ClassCourseRequirement[]>([])
+const copySubmitting = ref(false)
 
 // 表单数据
 const form = reactive({
@@ -540,10 +669,35 @@ const filteredClasses = computed(() => {
   return classes
 })
 
+// 分页后的数据
+const paginatedClasses = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredClasses.value.slice(start, end)
+})
+
+// 总数量
+const total = computed(() => filteredClasses.value.length)
+
 const gradeOptions = computed(() => {
   const grades = [...new Set(classStore.classes.map((c) => c.grade))]
   return grades.sort()
 })
+
+// 分页方法
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置到第一页
+}
+
+// 搜索或筛选时重置分页
+const resetPagination = () => {
+  currentPage.value = 1
+}
 
 // 课程需求相关计算属性
 const currentClassName = computed(() => {
@@ -558,6 +712,13 @@ const currentClassRequirements = computed(() => {
 const subjectOptions = computed(() => {
   const subjects = [...new Set(courseStore.courses.map((c) => c.subject))]
   return subjects.sort()
+})
+
+// 可用的源班级（排除当前编辑的班级）
+const availableSourceClasses = computed(() => {
+  return classStore.classes.filter(
+    (cls) => cls.id !== currentClassId.value && cls.courseRequirements.length > 0,
+  )
 })
 
 // 方法
@@ -675,7 +836,7 @@ const showAddRequirement = () => {
   addRequirementDialogVisible.value = true
 }
 
-const editRequirement = (requirement: any) => {
+const editRequirement = (requirement: ClassCourseRequirement) => {
   isEditRequirement.value = true
   currentRequirementId.value = requirement.id
   requirementForm.subjectName = requirement.subjectName
@@ -716,8 +877,8 @@ const handleRequirementSubmit = async () => {
     }
 
     addRequirementDialogVisible.value = false
-  } catch (error: any) {
-    ElMessage.error(error.message || '操作失败')
+  } catch (error: unknown) {
+    ElMessage.error(error instanceof Error ? error.message : '操作失败')
   } finally {
     requirementSubmitting.value = false
   }
@@ -926,6 +1087,63 @@ const cancelImport = () => {
   importData.value = []
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
+  }
+}
+
+// 复制课程需求相关方法
+const showCopyRequirementsDialog = () => {
+  selectedSourceClass.value = ''
+  sourceClassRequirements.value = []
+  copyRequirementsDialogVisible.value = true
+}
+
+const onSourceClassChange = (classId: string) => {
+  if (classId) {
+    const sourceClass = classStore.getClassById(classId)
+    sourceClassRequirements.value = sourceClass ? sourceClass.courseRequirements : []
+  } else {
+    sourceClassRequirements.value = []
+  }
+}
+
+const handleCopyRequirements = async () => {
+  if (!selectedSourceClass.value || !currentClassId.value) return
+
+  try {
+    let confirmMessage = `确定要复制课程需求吗？`
+
+    if (currentClassRequirements.value.length > 0) {
+      confirmMessage = `当前班级已有 ${currentClassRequirements.value.length} 个课程需求，复制操作将替换所有现有需求。确定要继续吗？`
+    }
+
+    await ElMessageBox.confirm(confirmMessage, '确认复制', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
+    copySubmitting.value = true
+
+    // 先清空当前班级的所有课程需求
+    const currentRequirements = [...currentClassRequirements.value]
+    currentRequirements.forEach((req) => {
+      classStore.deleteCourseRequirement(currentClassId.value, req.id)
+    })
+
+    // 复制源班级的课程需求
+    sourceClassRequirements.value.forEach((req) => {
+      classStore.addCourseRequirement(currentClassId.value, {
+        subjectName: req.subjectName,
+        weeklyHours: req.weeklyHours,
+      })
+    })
+
+    ElMessage.success(`成功复制了 ${sourceClassRequirements.value.length} 个课程需求`)
+    copyRequirementsDialogVisible.value = false
+  } catch {
+    ElMessage.info('已取消复制')
+  } finally {
+    copySubmitting.value = false
   }
 }
 

@@ -766,7 +766,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Calendar,
@@ -850,6 +850,10 @@ const animateNumber = (target: { value: number }, finalValue: number, duration: 
 
 // 初始化动画
 onMounted(() => {
+  // 为Landing页面添加特别的类名，允许滚动
+  document.documentElement.classList.add('landing-page')
+  document.body.classList.add('landing-page')
+
   // 延迟启动数字动画
   setTimeout(() => {
     animateNumber(animatedSchoolCount, 1200)
@@ -857,6 +861,12 @@ onMounted(() => {
     animateNumber(animatedTimeCount, 15000)
     animateNumber(animatedSatisfactionCount, 98)
   }, 1000)
+})
+
+// 清理类名
+onUnmounted(() => {
+  document.documentElement.classList.remove('landing-page')
+  document.body.classList.remove('landing-page')
 })
 </script>
 
