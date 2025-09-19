@@ -50,6 +50,14 @@ export interface TimeSlot {
   endTime: string
 }
 
+// 休息时间
+export interface BreakTime {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+}
+
 // 课程表条目
 export interface ScheduleItem {
   id: string
@@ -97,6 +105,7 @@ export const GRADE_OPTIONS = [
 export enum ViewType {
   CLASS = 'class',
   TEACHER = 'teacher',
+  GRADE = 'grade',
 }
 
 // 智能排课结果

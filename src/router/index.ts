@@ -52,6 +52,12 @@ const router = createRouter({
           meta: { title: '课程表' },
         },
         {
+          path: '/school-settings',
+          name: 'school-settings',
+          component: () => import('@/views/SchoolSettings.vue'),
+          meta: { title: '学校配置' },
+        },
+        {
           path: '/about',
           name: 'about',
           component: () => import('@/views/About.vue'),

@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Setting, EditPen, Check, RefreshRight } from '@element-plus/icons-vue'
 import { useSettingsStore } from '@/stores/settings'
@@ -109,43 +109,49 @@ const fontSizeOptions = [
   },
 ]
 
-// 重置设置
-const handleReset = async () => {
-  try {
-    await ElMessageBox.confirm('确定要重置所有设置吗？这将恢复到默认状态。', '确认重置', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
+// 处理重置
+const handleReset = () => {
+  ElMessageBox.confirm('确定要重置所有设置吗？此操作不可恢复。', '确认重置', {
+    type: 'warning',
+  })
+    .then(() => {
+      settingsStore.resetSettings()
+      ElMessage.success('设置已重置')
     })
-
-    settingsStore.resetSettings()
-    ElMessage.success('设置已重置')
-  } catch {
-    // 用户取消操作
-  }
+    .catch(() => {
+      // 用户取消操作
+    })
 }
+
+// 初始化
+onMounted(() => {
+  settingsStore.loadFromStorage()
+})
 </script>
 
 <style scoped>
-.settings-trigger {
+.settings-panel {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   z-index: 1000;
-  background: var(--el-color-primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-trigger {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none;
   transition: all 0.3s ease;
 }
 
 .settings-trigger:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .setting-section {
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--el-border-color-light);
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .setting-section:last-child {
@@ -154,37 +160,35 @@ const handleReset = async () => {
 }
 
 .setting-title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: #374151;
+  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
 }
 
 .setting-description {
-  font-size: 14px;
-  color: var(--el-text-color-regular);
-  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
 }
 
-/* 字体大小选项样式 */
 .font-size-option {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  border: 1px solid var(--el-border-color);
-  border-radius: 6px;
-  padding: 12px 16px;
   transition: all 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .font-size-option:hover {
-  border-color: var(--el-color-primary);
-  background-color: var(--el-color-primary-light-9);
+  background-color: #f9fafb;
 }
 
 .font-size-option.active {
-  border-color: var(--el-color-primary);
-  background-color: var(--el-color-primary-light-9);
+  border-color: #3b82f6;
+  background-color: #eff6ff;
 }
 
 .font-size-preview {
@@ -193,9 +197,8 @@ const handleReset = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--el-color-primary-light-8);
-  color: var(--el-color-primary);
-  border-radius: 4px;
-  font-weight: 600;
+  border-radius: 0.25rem;
+  background-color: #e5e7eb;
+  font-weight: 500;
 }
 </style>

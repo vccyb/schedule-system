@@ -42,6 +42,11 @@
             <el-icon><Grid /></el-icon>
             <span>课程表</span>
           </el-menu-item>
+
+          <el-menu-item index="/school-settings">
+            <el-icon><Tools /></el-icon>
+            <span>学校配置</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
 

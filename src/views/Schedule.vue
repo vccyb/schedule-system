@@ -169,7 +169,7 @@
         </div>
       </div>
 
-      <div class="schedule-container">
+      <div class="schedule-container" :style="getScheduleContainerStyle()">
         <!-- 时间表头 -->
         <div class="schedule-header grid grid-cols-8 gap-1 mb-1">
           <div class="header-cell text-center font-medium text-gray-700 p-3 bg-gray-100 rounded">
@@ -525,8 +525,24 @@ const addRules: FormRules = {
   timeSlotId: [{ required: true, message: '请选择时间段', trigger: 'change' }],
 }
 
-// 星期选项
-const weekDays = WEEKDAYS.slice(1) // 去掉周日，从周一开始
+// 星期选项（根据学校设置过滤）
+const weekDays = computed(() => {
+  // 从localStorage读取学校设置
+  const savedSettings = localStorage.getItem('school-settings')
+  if (savedSettings) {
+    try {
+      const settings = JSON.parse(savedSettings)
+      if (settings.schoolDays && Array.isArray(settings.schoolDays)) {
+        // 根据学校设置的上课日过滤星期
+        return WEEKDAYS.filter((day) => settings.schoolDays.includes(String(day.value)))
+      }
+    } catch (e) {
+      console.error('解析学校设置失败:', e)
+    }
+  }
+  // 默认返回所有星期
+  return WEEKDAYS
+})
 
 // 计算属性
 const selectedClassName = computed(() => {
@@ -1000,6 +1016,22 @@ const handleAutoSchedule = async () => {
   }
 }
 
+// 计算最小宽度
+const calculateMinWidth = () => {
+  // 基础宽度：时间列(120px) + 星期列数 * 每列最小宽度(150px)
+  const baseWidth = 120 + weekDays.value.length * 150
+  // 确保最小宽度至少为800px
+  return `${Math.max(baseWidth, 800)}px`
+}
+
+// 获取课程表容器样式
+const getScheduleContainerStyle = () => {
+  return {
+    minWidth: calculateMinWidth(),
+    gridTemplateColumns: `120px repeat(${weekDays.value.length}, 1fr)`,
+  }
+}
+
 // 初始化
 onMounted(async () => {
   teacherStore.loadFromStorage()
@@ -1021,6 +1053,7 @@ onMounted(async () => {
 
 .schedule-container {
   min-width: 800px;
+  overflow-x: auto;
 }
 
 .schedule-header {

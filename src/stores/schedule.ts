@@ -23,6 +23,9 @@ export const useScheduleStore = defineStore('schedule', () => {
     { id: '8', name: '第八节', startTime: '16:55', endTime: '17:40' },
   ])
 
+  // 休息时间
+  const breakTimes = ref<{ id: string; name: string; startTime: string; endTime: string }[]>([])
+
   // 计算属性
   const scheduleCount = computed(() => scheduleItems.value.length)
 
@@ -59,12 +62,16 @@ export const useScheduleStore = defineStore('schedule', () => {
     try {
       const storedSchedule = localStorage.getItem('schedule-system-schedule')
       const storedTimeSlots = localStorage.getItem('schedule-system-timeslots')
+      const storedBreakTimes = localStorage.getItem('school-break-times')
 
       if (storedSchedule) {
         scheduleItems.value = JSON.parse(storedSchedule)
       }
       if (storedTimeSlots) {
         timeSlots.value = JSON.parse(storedTimeSlots)
+      }
+      if (storedBreakTimes) {
+        breakTimes.value = JSON.parse(storedBreakTimes)
       }
     } catch (error) {
       console.error('Failed to load schedule from localStorage:', error)
@@ -76,9 +83,40 @@ export const useScheduleStore = defineStore('schedule', () => {
     try {
       localStorage.setItem('schedule-system-schedule', JSON.stringify(scheduleItems.value))
       localStorage.setItem('schedule-system-timeslots', JSON.stringify(timeSlots.value))
+      localStorage.setItem('school-break-times', JSON.stringify(breakTimes.value))
     } catch (error) {
       console.error('Failed to save schedule to localStorage:', error)
     }
+  }
+
+  // 重置时间配置到默认值
+  const resetTimeSlots = () => {
+    timeSlots.value = [
+      { id: '1', name: '第一节', startTime: '08:00', endTime: '08:45' },
+      { id: '2', name: '第二节', startTime: '08:55', endTime: '09:40' },
+      { id: '3', name: '第三节', startTime: '10:00', endTime: '10:45' },
+      { id: '4', name: '第四节', startTime: '10:55', endTime: '11:40' },
+      { id: '5', name: '第五节', startTime: '14:00', endTime: '14:45' },
+      { id: '6', name: '第六节', startTime: '14:55', endTime: '15:40' },
+      { id: '7', name: '第七节', startTime: '16:00', endTime: '16:45' },
+      { id: '8', name: '第八节', startTime: '16:55', endTime: '17:40' },
+    ]
+    breakTimes.value = []
+    saveToStorage()
+  }
+
+  // 更新时间配置
+  const updateTimeSlots = (newTimeSlots: TimeSlot[]) => {
+    timeSlots.value = newTimeSlots
+    saveToStorage()
+  }
+
+  // 更新休息时间
+  const updateBreakTimes = (
+    newBreakTimes: { id: string; name: string; startTime: string; endTime: string }[],
+  ) => {
+    breakTimes.value = newBreakTimes
+    saveToStorage()
   }
 
   // 检查时间冲突（同时检查班级和教师冲突）
@@ -218,6 +256,12 @@ export const useScheduleStore = defineStore('schedule', () => {
 
   // 清空所有排课
   const clearSchedule = () => {
+    scheduleItems.value = []
+    saveToStorage()
+  }
+
+  // 清空所有排课数据（用于上课日更改时）
+  const clearAllSchedule = () => {
     scheduleItems.value = []
     saveToStorage()
   }
@@ -451,6 +495,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   return {
     scheduleItems,
     timeSlots,
+    breakTimes,
     scheduleCount,
     getScheduleByDay,
     getScheduleByTimeSlot,
@@ -468,9 +513,14 @@ export const useScheduleStore = defineStore('schedule', () => {
     deleteScheduleItem,
     moveScheduleItem,
     clearSchedule,
+    clearAllSchedule, // 新增的方法
     addTimeSlot,
     updateTimeSlot,
     deleteTimeSlot,
     autoScheduleForClass,
+    // 新增的方法
+    resetTimeSlots,
+    updateTimeSlots,
+    updateBreakTimes,
   }
 })
