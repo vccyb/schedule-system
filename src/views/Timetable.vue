@@ -249,23 +249,18 @@ const selectedGrade = ref('')
 const currentView = ref<ViewType>(ViewType.CLASS)
 const timetableRef = ref()
 
-// 星期选项（根据学校设置过滤）
+// 星期选项（始终显示一周七天，按照指定顺序排列：周一到周五，然后是周六和周日）
 const weekDays = computed(() => {
-  // 从localStorage读取学校设置
-  const savedSettings = localStorage.getItem('school-settings')
-  if (savedSettings) {
-    try {
-      const settings = JSON.parse(savedSettings)
-      if (settings.schoolDays && Array.isArray(settings.schoolDays)) {
-        // 根据学校设置的上课日过滤星期
-        return WEEKDAYS.filter((day) => settings.schoolDays.includes(String(day.value)))
-      }
-    } catch (e) {
-      console.error('解析学校设置失败:', e)
-    }
-  }
-  // 默认返回所有星期
-  return WEEKDAYS
+  // 始终显示完整的一周（周一到周日），按照指定顺序排列
+  return [
+    WEEKDAYS.find((day) => day.value === 1), // 周一
+    WEEKDAYS.find((day) => day.value === 2), // 周二
+    WEEKDAYS.find((day) => day.value === 3), // 周三
+    WEEKDAYS.find((day) => day.value === 4), // 周四
+    WEEKDAYS.find((day) => day.value === 5), // 周五
+    WEEKDAYS.find((day) => day.value === 6), // 周六
+    WEEKDAYS.find((day) => day.value === 0), // 周日
+  ].filter(Boolean) as typeof WEEKDAYS
 })
 
 // 当前日期
@@ -560,7 +555,7 @@ onMounted(async () => {
 }
 
 .timetable-container {
-  min-width: 800px;
+  min-width: 1000px; /* 增加最小宽度以适应7列 */
 }
 
 .timetable-grid {
@@ -571,7 +566,7 @@ onMounted(async () => {
 
 .grid-header {
   display: grid;
-  grid-template-columns: 120px repeat(7, 1fr);
+  grid-template-columns: 120px repeat(7, 1fr); /* 1个时间列 + 7个星期列 */
   background-color: #f8fafc;
 }
 
@@ -582,7 +577,7 @@ onMounted(async () => {
 
 .grid-row {
   display: grid;
-  grid-template-columns: 120px repeat(7, 1fr);
+  grid-template-columns: 120px repeat(7, 1fr); /* 1个时间列 + 7个星期列 */
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -710,7 +705,7 @@ onMounted(async () => {
 
   .grid-header,
   .grid-row {
-    grid-template-columns: 100px repeat(7, 120px);
+    grid-template-columns: 100px repeat(7, 120px); /* 1个时间列 + 7个星期列 */
   }
 
   .course-content {

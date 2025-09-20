@@ -525,7 +525,7 @@ const addRules: FormRules = {
   timeSlotId: [{ required: true, message: '请选择时间段', trigger: 'change' }],
 }
 
-// 星期选项（根据学校设置过滤）
+// 星期选项（根据学校设置动态调整显示的上课日）
 const weekDays = computed(() => {
   // 从localStorage读取学校设置
   const savedSettings = localStorage.getItem('school-settings')
@@ -533,15 +533,40 @@ const weekDays = computed(() => {
     try {
       const settings = JSON.parse(savedSettings)
       if (settings.schoolDays && Array.isArray(settings.schoolDays)) {
-        // 根据学校设置的上课日过滤星期
-        return WEEKDAYS.filter((day) => settings.schoolDays.includes(String(day.value)))
+        // 根据学校设置的上课日来显示
+        const schoolDays = settings.schoolDays.map(Number)
+
+        // 按照指定顺序排列：周一到周日
+        const orderedDays = []
+
+        // 先添加周一到周五
+        for (let i = 1; i <= 5; i++) {
+          if (schoolDays.includes(i)) {
+            const day = WEEKDAYS.find((d) => d.value === i)
+            if (day) orderedDays.push(day)
+          }
+        }
+
+        // 然后添加周六（如果在设置中）
+        if (schoolDays.includes(6)) {
+          const saturday = WEEKDAYS.find((d) => d.value === 6)
+          if (saturday) orderedDays.push(saturday)
+        }
+
+        // 最后添加周日（如果在设置中）
+        if (schoolDays.includes(0)) {
+          const sunday = WEEKDAYS.find((d) => d.value === 0)
+          if (sunday) orderedDays.push(sunday)
+        }
+
+        return orderedDays
       }
     } catch (e) {
       console.error('解析学校设置失败:', e)
     }
   }
-  // 默认返回所有星期
-  return WEEKDAYS
+  // 默认返回周一到周五
+  return WEEKDAYS.filter((day) => day.value >= 1 && day.value <= 5)
 })
 
 // 计算属性
@@ -1052,22 +1077,21 @@ onMounted(async () => {
 }
 
 .schedule-container {
-  min-width: 800px;
-  overflow-x: auto;
+  min-width: 1000px; /* 增加最小宽度以适应7列 */
 }
 
 .schedule-header {
-  border-radius: 8px 8px 0 0;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 120px repeat(7, 1fr); /* 1个时间列 + 7个星期列 */
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
-.header-cell {
-  font-weight: 600;
-  color: #374151;
-}
-
-.time-cell {
-  min-height: 80px;
+.schedule-row {
+  display: grid;
+  grid-template-columns: 120px repeat(7, 1fr); /* 1个时间列 + 7个星期列 */
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .schedule-cell {

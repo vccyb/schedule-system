@@ -70,6 +70,29 @@
             </el-card>
           </div>
 
+          <!-- 上课日配置 -->
+          <div class="mb-6">
+            <el-card>
+              <template #header>
+                <div class="flex items-center">
+                  <el-icon class="mr-2"><Calendar /></el-icon>
+                  <span>上课日配置</span>
+                </div>
+              </template>
+              <el-form-item label="选择上课日">
+                <el-checkbox-group v-model="timeForm.schoolDays">
+                  <el-checkbox label="1">周一</el-checkbox>
+                  <el-checkbox label="2">周二</el-checkbox>
+                  <el-checkbox label="3">周三</el-checkbox>
+                  <el-checkbox label="4">周四</el-checkbox>
+                  <el-checkbox label="5">周五</el-checkbox>
+                  <el-checkbox label="6">周六</el-checkbox>
+                  <el-checkbox label="0">周日</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+            </el-card>
+          </div>
+
           <!-- 时间段配置 -->
           <div class="mb-6">
             <div class="flex items-center justify-between mb-4">
@@ -208,18 +231,6 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="上课日">
-              <el-checkbox-group v-model="schoolForm.schoolDays">
-                <el-checkbox label="1">周一</el-checkbox>
-                <el-checkbox label="2">周二</el-checkbox>
-                <el-checkbox label="3">周三</el-checkbox>
-                <el-checkbox label="4">周四</el-checkbox>
-                <el-checkbox label="5">周五</el-checkbox>
-                <el-checkbox label="6">周六</el-checkbox>
-                <el-checkbox label="7">周日</el-checkbox>
-              </el-checkbox-group>
-            </el-form-item>
-
             <div class="flex justify-end space-x-3 mt-6">
               <el-button @click="resetSchoolSettings" type="warning">重置</el-button>
               <el-button @click="saveSchoolSettings" type="primary">保存学校信息</el-button>
@@ -274,14 +285,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, Plus } from '@element-plus/icons-vue'
 import { useScheduleStore } from '@/stores/schedule'
-import { useClassStore } from '@/stores/class'
 import { GRADE_OPTIONS } from '@/types'
 import type { TimeSlot } from '@/types'
 
 const scheduleStore = useScheduleStore()
-const classStore = useClassStore()
+// const classStore = useClassStore()
 
 // 活动标签页
 const activeTab = ref('time')
@@ -292,13 +302,13 @@ const timeForm = ref({
   periodDuration: 40,
   timeSlots: [] as TimeSlot[],
   breakTimes: [] as { id: string; name: string; startTime: string; endTime: string }[],
+  schoolDays: ['1', '2', '3', '4', '5'], // 默认周一到周五上课
 })
 
 // 学校信息配置表单数据
 const schoolForm = ref({
   schoolName: '默认学校',
   semesterName: '2023-2024学年',
-  schoolDays: ['1', '2', '3', '4', '5'], // 默认周一到周五上课
   defaultGrade: '一年级',
 })
 
@@ -310,38 +320,13 @@ const campusForm = ref({
 // 保存初始的上课日设置
 let initialSchoolDays: string[] = []
 
-// 监听上课日变化
+// 监听上课日变化（仅保存初始值）
 watch(
-  () => schoolForm.value.schoolDays,
-  (newVal, oldVal) => {
-    // 只有当旧值存在且新旧值不同时才触发
-    if (
-      oldVal &&
-      JSON.stringify(newVal) !== JSON.stringify(oldVal) &&
-      JSON.stringify(oldVal) !== JSON.stringify(initialSchoolDays)
-    ) {
-      // 检查是否有已排课程
-      if (scheduleStore.scheduleCount > 0) {
-        ElMessageBox.confirm(
-          '更改上课日设置将影响已排课程，系统需要清空所有排课数据以确保数据一致性。确定要继续吗？',
-          '警告：将清空所有排课数据',
-          {
-            type: 'warning',
-            confirmButtonText: '确定并清空排课',
-            cancelButtonText: '取消',
-          },
-        )
-          .then(() => {
-            // 清空所有排课数据
-            scheduleStore.clearAllSchedule()
-            ElMessage.success('已清空所有排课数据，请重新进行排课')
-          })
-          .catch(() => {
-            // 恢复原来的设置
-            schoolForm.value.schoolDays = [...oldVal]
-            ElMessage.info('已取消操作')
-          })
-      }
+  () => timeForm.value.schoolDays,
+  (newVal) => {
+    // 保存初始值
+    if (initialSchoolDays.length === 0) {
+      initialSchoolDays = [...newVal]
     }
   },
   { deep: true },
@@ -463,7 +448,8 @@ const initTimeForm = () => {
   if (savedBreakTimes) {
     try {
       timeForm.value.breakTimes = JSON.parse(savedBreakTimes)
-    } catch (e) {
+    } catch (_error) {
+      // 忽略解析错误，使用默认空数组
       timeForm.value.breakTimes = []
     }
   }
@@ -493,7 +479,7 @@ const handleDailyPeriodsChange = (value: number) => {
 const handlePeriodDurationChange = (value: number) => {
   // 根据每节课时长自动调整结束时间
   let currentTime = '08:00'
-  timeForm.value.timeSlots.forEach((slot, index) => {
+  timeForm.value.timeSlots.forEach((slot) => {
     const [hours, minutes] = currentTime.split(':').map(Number)
     const endTimeMinutes = hours * 60 + minutes + value
     const endHours = Math.floor(endTimeMinutes / 60)
@@ -557,6 +543,13 @@ const resetTimeSettings = () => {
   })
     .then(() => {
       scheduleStore.resetTimeSlots()
+      timeForm.value = {
+        dailyPeriods: 8,
+        periodDuration: 40,
+        timeSlots: [] as TimeSlot[],
+        breakTimes: [] as { id: string; name: string; startTime: string; endTime: string }[],
+        schoolDays: ['1', '2', '3', '4', '5'], // 默认周一到周五上课
+      }
       initTimeForm()
       ElMessage.success('已重置为默认时间配置')
     })
@@ -593,13 +586,61 @@ const saveTimeSettings = () => {
       }
     }
 
-    // 保存到store
-    scheduleStore.updateTimeSlots(timeForm.value.timeSlots)
+    // 检查上课日是否有变更
+    const hasSchoolDaysChanged =
+      initialSchoolDays.length > 0 &&
+      JSON.stringify(timeForm.value.schoolDays) !== JSON.stringify(initialSchoolDays)
 
-    // 保存休息时间到localStorage
-    localStorage.setItem('school-break-times', JSON.stringify(timeForm.value.breakTimes))
-
-    ElMessage.success('时间配置保存成功')
+    // 如果上课日有变更且有排课数据，需要确认
+    if (hasSchoolDaysChanged && scheduleStore.scheduleCount > 0) {
+      ElMessageBox.confirm(
+        '更改上课日设置将影响已排课程，系统需要清空所有排课数据以确保数据一致性。确定要继续吗？',
+        '警告：将清空所有排课数据',
+        {
+          type: 'warning',
+          confirmButtonText: '确定并清空排课',
+          cancelButtonText: '取消',
+        },
+      )
+        .then(() => {
+          // 清空所有排课数据
+          scheduleStore.clearAllSchedule()
+          // 保存到store
+          scheduleStore.updateTimeSlots(timeForm.value.timeSlots)
+          // 保存休息时间到localStorage
+          localStorage.setItem('school-break-times', JSON.stringify(timeForm.value.breakTimes))
+          // 保存时间配置到localStorage
+          localStorage.setItem(
+            'school-settings',
+            JSON.stringify({
+              ...schoolForm.value,
+              schoolDays: timeForm.value.schoolDays,
+            }),
+          )
+          // 更新初始值
+          initialSchoolDays = [...timeForm.value.schoolDays]
+          ElMessage.success('已清空所有排课数据，时间配置保存成功')
+        })
+        .catch(() => {
+          ElMessage.info('已取消操作')
+        })
+    } else {
+      // 保存到store
+      scheduleStore.updateTimeSlots(timeForm.value.timeSlots)
+      // 保存休息时间到localStorage
+      localStorage.setItem('school-break-times', JSON.stringify(timeForm.value.breakTimes))
+      // 保存时间配置到localStorage
+      localStorage.setItem(
+        'school-settings',
+        JSON.stringify({
+          ...schoolForm.value,
+          schoolDays: timeForm.value.schoolDays,
+        }),
+      )
+      // 更新初始值
+      initialSchoolDays = [...timeForm.value.schoolDays]
+      ElMessage.success('时间配置保存成功')
+    }
   } catch (error) {
     console.error('保存时间配置失败:', error)
     ElMessage.error('保存时间配置失败')
@@ -655,7 +696,6 @@ const resetSchoolSettings = () => {
       schoolForm.value = {
         schoolName: '默认学校',
         semesterName: '2023-2024学年',
-        schoolDays: ['1', '2', '3', '4', '5'],
         defaultGrade: '一年级',
       }
       ElMessage.success('已重置学校信息配置')
@@ -668,8 +708,27 @@ const resetSchoolSettings = () => {
 // 保存学校信息配置
 const saveSchoolSettings = () => {
   try {
-    // 保存到localStorage
-    localStorage.setItem('school-settings', JSON.stringify(schoolForm.value))
+    // 保存到localStorage（不包含上课日设置）
+    const savedSettings = localStorage.getItem('school-settings')
+    let existingSettings = {
+      schoolDays: ['1', '2', '3', '4', '5'], // 默认值
+    }
+
+    if (savedSettings) {
+      try {
+        existingSettings = JSON.parse(savedSettings)
+      } catch (e) {
+        // 如果解析失败，使用默认值
+      }
+    }
+
+    localStorage.setItem(
+      'school-settings',
+      JSON.stringify({
+        ...schoolForm.value,
+        schoolDays: existingSettings.schoolDays, // 保留时间配置中的上课日设置
+      }),
+    )
     ElMessage.success('学校信息配置保存成功')
   } catch (error) {
     console.error('保存学校信息配置失败:', error)
@@ -685,10 +744,19 @@ onMounted(() => {
   try {
     const savedSettings = localStorage.getItem('school-settings')
     if (savedSettings) {
-      schoolForm.value = { ...schoolForm.value, ...JSON.parse(savedSettings) }
+      const settings = JSON.parse(savedSettings)
+      schoolForm.value = {
+        schoolName: settings.schoolName || '默认学校',
+        semesterName: settings.semesterName || '2023-2024学年',
+        defaultGrade: settings.defaultGrade || '一年级',
+      }
+      // 加载时间配置中的上课日设置
+      if (settings.schoolDays) {
+        timeForm.value.schoolDays = settings.schoolDays
+      }
     }
     // 保存初始的上课日设置
-    initialSchoolDays = [...schoolForm.value.schoolDays]
+    initialSchoolDays = [...timeForm.value.schoolDays]
   } catch (error) {
     console.error('加载学校信息配置失败:', error)
   }
